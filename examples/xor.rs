@@ -1,5 +1,4 @@
 use log::LevelFilter;
-use serde_json::json;
 
 use vivalaakam_neat_rs::{Config, Genome, Organism};
 
