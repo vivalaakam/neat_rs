@@ -456,4 +456,8 @@ impl Genome {
             Err(_) => i32::MAX,
         }
     }
+
+    pub fn as_json(&self) -> String {
+        json!(self).to_string()
+    }
 }

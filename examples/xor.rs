@@ -84,5 +84,5 @@ fn main() {
         epoch += 1;
     }
 
-    println!("{}", json!(best.unwrap().genome).to_string());
+    println!("{}", best.unwrap().genome.as_json());
 }
