@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::neuron_type::NeuronType;
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
     id: String,
     bias: f64,

@@ -1,7 +1,9 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
+use log::debug;
 use new_york_utils::{levenshtein, make_id};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::config::Config;
 use crate::connection::Connection;
@@ -32,10 +34,10 @@ impl Genome {
 
         let mut layer = vec![];
         let mut counter = 1;
-        for _ in 0..inputs {
+        for i in 0..inputs {
             layer.push(Node::new(
                 NeuronType::Input,
-                make_id(6),
+                format!("input_{i}"),
                 get_random_weight(1f64),
                 Some(counter),
             ));
@@ -68,10 +70,10 @@ impl Genome {
 
         let mut layer = vec![];
 
-        for _ in 0..outputs {
+        for i in 0..outputs {
             let node = Node::new(
-                NeuronType::Input,
-                make_id(6),
+                NeuronType::Output,
+                format!("output_{i}"),
                 get_random_weight(1f64),
                 Some(counter),
             );
@@ -119,8 +121,11 @@ impl Genome {
             positions.insert(node.1.get_id(), node.0);
         }
 
+        debug!("sort_nodes conns: {:?}", conns);
+
         for connection in &self.connections {
             if connection.get_enabled() == true {
+                debug!("sort_nodes connection.get_to(): {:?}", connection.get_to());
                 let nodes = conns.get_mut(&connection.get_to()).unwrap();
                 nodes.push(connection);
             }
@@ -202,8 +207,11 @@ impl Genome {
             positions.insert(node.get_id(), node.get_position());
         }
 
+        debug!("get_network conns: {:?}", conns);
+
         for connection in &self.connections {
             if connection.get_enabled() == true {
+                debug!("get_network connection.get_to(): {}", connection.get_to());
                 let nodes = conns.get_mut(&connection.get_to()).unwrap();
                 nodes.push(connection);
             }
@@ -238,24 +246,30 @@ impl Genome {
 
     pub fn mutate(&self, child: &Genome, config: &Config) -> Option<Self> {
         let mut genome = self.clone();
+        debug!("mutate enter: {}", json!(genome));
 
         if get_random() < config.crossover {
             genome = genome.mutate_crossover(child).unwrap_or(genome);
+            debug!("mutate crossover: {}", json!(genome));
         }
 
         if get_random() < config.add_node {
             genome = genome.mutate_add_node().unwrap_or(genome);
+            debug!("mutate add_node: {}", json!(genome));
         }
 
         if get_random() < config.add_connection {
             genome = genome.mutate_add_connection().unwrap_or(genome);
+            debug!("mutate add_connection: {}", json!(genome));
         }
 
         if get_random() < config.connection_enabled {
-            genome = genome.mutate_connection_enabled().unwrap_or(genome)
+            genome = genome.mutate_connection_enabled().unwrap_or(genome);
+            debug!("mutate connection_enabled: {}", json!(genome));
         }
         if get_random() < config.connection_weight {
-            genome = genome.mutate_connection_weight().unwrap_or(genome)
+            genome = genome.mutate_connection_weight().unwrap_or(genome);
+            debug!("mutate connection_weight: {}", json!(genome));
         }
 
         Some(genome)
@@ -351,7 +365,6 @@ impl Genome {
             None => {}
         }
 
-
         Some(genome)
     }
 
@@ -385,7 +398,8 @@ impl Genome {
     }
 
     pub fn mutate_crossover(&self, child: &Genome) -> Option<Self> {
-        let mut genome = self.clone();
+        let mut nodes = self.get_nodes();
+        let mut connections = self.get_connections();
 
         let mut exists_nodes = HashSet::new();
 
@@ -397,7 +411,7 @@ impl Genome {
 
         for node in child.get_nodes() {
             if node.get_type() == NeuronType::Hidden && !exists_nodes.contains(&node.get_id()) {
-                genome.add_node(node.clone());
+                nodes.push(node.clone());
             }
         }
 
@@ -409,11 +423,14 @@ impl Genome {
 
         for connection in &child.get_connections() {
             if !exists_connections.contains(&connection.get_id()) {
-                genome.add_connection(connection.clone());
+                connections.push(connection.clone());
             }
         }
 
-        Some(genome)
+        debug!("mutate_crossover: nodes {:?}", nodes);
+        debug!("mutate_crossover: connections {:?}", connections);
+
+        Some(Genome::new(nodes, connections))
     }
 
     pub fn get_distance(&self, child: &Genome) -> i32 {

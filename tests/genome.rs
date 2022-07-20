@@ -93,7 +93,10 @@ mod tests {
         let genome = Genome::new(nodes, connections);
         let new_genome = genome.mutate_connection_weight().unwrap();
 
-        assert_ne!(new_genome.get_connections().first().unwrap().get_weight(), 0.7f64);
+        assert_ne!(
+            new_genome.get_connections().first().unwrap().get_weight(),
+            0.7f64
+        );
     }
 
     #[test]
