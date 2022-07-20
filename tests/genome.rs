@@ -2,7 +2,7 @@
 mod tests {
     use serde_json::json;
 
-    use neat_rs::{Connection, Genome, NeuronType, Node};
+    use vivalaakam_neat_rs::{Connection, Genome, NeuronType, Node};
 
     #[test]
     fn it_works() {

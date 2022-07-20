@@ -1,5 +1,5 @@
 [package]
-name = "neat_rs"
+name = "vivalaakam_neat_rs"
 version = "0.1.0"
 edition = "2021"
 authors = ["Andrey Makarov <viva.la.akam@gmail.com>"]

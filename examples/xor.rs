@@ -1,7 +1,7 @@
 use log::LevelFilter;
 use serde_json::json;
 
-use neat_rs::{Config, Genome, Organism};
+use vivalaakam_neat_rs::{Config, Genome, Organism};
 
 fn get_fitness(organism: &mut Organism) {
     let mut distance: f64 = 0f64;
