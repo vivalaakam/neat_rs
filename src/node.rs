@@ -12,8 +12,8 @@ pub struct Node {
 
 impl Node {
     pub fn new<T>(neuron_type: NeuronType, id: T, bias: f64, position: Option<usize>) -> Self
-        where
-            T: Into<String>,
+    where
+        T: Into<String>,
     {
         Node {
             id: id.into(),

@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
-use crate::{Config, Genome};
 use crate::network::Network;
+use crate::{Config, Genome};
 
 #[derive(Clone)]
 pub struct Organism {
@@ -35,7 +35,7 @@ impl Organism {
     pub fn mutate(&self, child: &Organism, config: &Config) -> Option<Self> {
         match self.genome.mutate(&child.genome, config) {
             None => None,
-            Some(genome) => Some(Organism::new(genome))
+            Some(genome) => Some(Organism::new(genome)),
         }
     }
 

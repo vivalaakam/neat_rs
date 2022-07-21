@@ -11,4 +11,3 @@ pub struct Config {
     pub node_bias_prob: f32,
     pub node_bias_delta: f64,
 }
-

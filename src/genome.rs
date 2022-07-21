@@ -28,7 +28,12 @@ impl Genome {
         genome
     }
 
-    pub fn generate_genome(inputs: usize, outputs: usize, hidden: Vec<usize>, config: &Config) -> Self {
+    pub fn generate_genome(
+        inputs: usize,
+        outputs: usize,
+        hidden: Vec<usize>,
+        config: &Config,
+    ) -> Self {
         let mut nodes = vec![];
         let mut connections = vec![];
 
@@ -50,7 +55,12 @@ impl Genome {
         for l in hidden {
             let mut layer = vec![];
             for _ in 0..l {
-                let node = Node::new(NeuronType::Input, make_id(6), get_random_weight(config.node_bias), Some(counter));
+                let node = Node::new(
+                    NeuronType::Input,
+                    make_id(6),
+                    get_random_weight(config.node_bias),
+                    Some(counter),
+                );
 
                 for last in &last_layer {
                     connections.push(Connection::new(
@@ -287,7 +297,12 @@ impl Genome {
 
         let connection = self.connections[conn].clone();
 
-        let node = Node::new(NeuronType::Hidden, make_id(6), get_random_weight(config.node_bias), None);
+        let node = Node::new(
+            NeuronType::Hidden,
+            make_id(6),
+            get_random_weight(config.node_bias),
+            None,
+        );
         let from = Connection::new(connection.get_from(), node.get_id(), 1f64);
         genome.connections.push(from);
 
@@ -394,7 +409,9 @@ impl Genome {
 
         match genome.connections.get_mut(index.unwrap()) {
             Some(connection) => {
-                connection.set_weight(connection.get_weight() + get_random_weight(config.connection_weight_delta));
+                connection.set_weight(
+                    connection.get_weight() + get_random_weight(config.connection_weight_delta),
+                );
             }
             None => {}
         }
