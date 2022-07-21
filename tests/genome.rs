@@ -2,7 +2,7 @@
 mod tests {
     use serde_json::json;
 
-    use vivalaakam_neat_rs::{Connection, Genome, NeuronType, Node};
+    use vivalaakam_neat_rs::{Config, Connection, Genome, NeuronType, Node};
 
     #[test]
     fn it_works() {
@@ -32,7 +32,13 @@ mod tests {
 
     #[test]
     fn generate_genome() {
-        let genome = Genome::generate_genome(1, 1, vec![2]);
+        let config = Config {
+            node_bias: 1.0,
+            connection_weight: 1.0,
+            ..Config::default()
+        };
+
+        let genome = Genome::generate_genome(1, 1, vec![2], &config);
 
         assert_eq!(genome.get_nodes().len(), 4);
         assert_eq!(genome.get_connections().len(), 4);
@@ -66,6 +72,11 @@ mod tests {
 
     #[test]
     fn add_node() {
+        let config = Config {
+            node_bias: 1.0,
+            ..Config::default()
+        };
+
         let nodes = vec![
             Node::new(NeuronType::Input, "input_uuid", 0.0, Some(1)),
             Node::new(NeuronType::Output, "output_uuid", -0.3, Some(2)),
@@ -73,17 +84,19 @@ mod tests {
         let connections = vec![Connection::new("input_uuid", "output_uuid", 0.7)];
 
         let genome = Genome::new(nodes, connections);
-        let new_genome = genome.mutate_add_node().unwrap();
-
-        let network = new_genome.get_network();
+        let new_genome = genome.mutate_add_node(&config).unwrap();
 
         assert_eq!(new_genome.get_nodes().len(), 3);
         assert_eq!(new_genome.get_connections().len(), 3);
-        assert_eq!(network.activate(vec![1.0]), vec![0.8748826000922477]);
     }
 
     #[test]
     fn mutate_connection_weight() {
+        let config = Config {
+            connection_weight_delta: 1.0,
+            ..Config::default()
+        };
+
         let nodes = vec![
             Node::new(NeuronType::Input, "input_uuid", 0f64, None),
             Node::new(NeuronType::Output, "output_uuid", -0.3f64, None),
@@ -91,7 +104,7 @@ mod tests {
         let connections = vec![Connection::new("input_uuid", "output_uuid", 0.7f64)];
 
         let genome = Genome::new(nodes, connections);
-        let new_genome = genome.mutate_connection_weight().unwrap();
+        let new_genome = genome.mutate_connection_weight(&config).unwrap();
 
         assert_ne!(
             new_genome.get_connections().first().unwrap().get_weight(),

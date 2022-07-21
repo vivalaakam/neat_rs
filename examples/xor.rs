@@ -33,13 +33,18 @@ fn main() {
         add_connection: 0.15,
         connection_enabled: 0.1,
         crossover: 0.3,
-        connection_weight: 0.8,
+        connection_weight: 1.0,
+        connection_weight_prob: 0.8,
+        connection_weight_delta: 0.1,
+        node_bias_prob: 0.15,
+        node_bias_delta: 0.1,
+        node_bias: 1.0,
     };
 
-    let genome = Genome::generate_genome(2, 1, vec![]);
+    let genome = Genome::generate_genome(2, 1, vec![], &config);
 
     while population.len() < population_size {
-        match genome.mutate_connection_weight() {
+        match genome.mutate_connection_weight(&config) {
             Some(genome) => {
                 let mut organism = Organism::new(genome);
                 get_fitness(&mut organism);
