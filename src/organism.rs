@@ -38,6 +38,15 @@ impl Organism {
             Some(genome) => Some(Organism::new(genome))
         }
     }
+
+    pub fn as_json(&self) -> String {
+        self.genome.as_json()
+    }
+
+    pub fn from_json(&self, data: String) -> Self {
+        let genome = serde_json::from_str::<Genome>(data.as_str()).unwrap();
+        Organism::new(genome)
+    }
 }
 
 impl Ord for Organism {
