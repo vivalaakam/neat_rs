@@ -2,15 +2,15 @@
 mod tests {
     use serde_json::json;
 
-    use vivalaakam_neat_rs::{Config, Connection, Genome, NeuronType, Node};
+    use vivalaakam_neat_rs::{Activation, Config, Connection, Genome, NeuronType, Node};
 
     #[test]
     fn it_works() {
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid", 0f64, None),
-            Node::new(NeuronType::Hidden, "hidden_uuid", 0f64, None),
-            Node::new(NeuronType::Hidden, "hidden_2_uuid", 0f64, None),
-            Node::new(NeuronType::Output, "output_uuid", 0f64, None),
+            Node::new(NeuronType::Input, "input_uuid", 0f64, None, None),
+            Node::new(NeuronType::Hidden, "hidden_uuid", 0f64, None, None),
+            Node::new(NeuronType::Hidden, "hidden_2_uuid", 0f64, None, None),
+            Node::new(NeuronType::Output, "output_uuid", 0f64, None, None),
         ];
         let connections = vec![
             Connection::new("input_uuid", "output_uuid", 0f64),
@@ -26,7 +26,7 @@ mod tests {
         assert_eq!(genome.get_connections().len(), 5);
         assert_eq!(
             json!(genome).to_string(),
-            r#"{"connections":[{"enabled":true,"from":"input_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_2_uuid","weight":0.0},{"enabled":true,"from":"hidden_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"hidden_2_uuid","to":"output_uuid","weight":0.0}],"nodes":[{"bias":0.0,"id":"input_uuid","neuron_type":"Input","position":0},{"bias":0.0,"id":"hidden_uuid","neuron_type":"Hidden","position":1},{"bias":0.0,"id":"hidden_2_uuid","neuron_type":"Hidden","position":2},{"bias":0.0,"id":"output_uuid","neuron_type":"Output","position":3}]}"#
+            r#"{"connections":[{"enabled":true,"from":"input_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_2_uuid","weight":0.0},{"enabled":true,"from":"hidden_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"hidden_2_uuid","to":"output_uuid","weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"id":"input_uuid","neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"id":"hidden_uuid","neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"id":"hidden_2_uuid","neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"id":"output_uuid","neuron_type":"Output","position":3}]}"#
         );
     }
 
@@ -38,7 +38,7 @@ mod tests {
             ..Config::default()
         };
 
-        let genome = Genome::generate_genome(1, 1, vec![2], &config);
+        let genome = Genome::generate_genome(1, 1, vec![2], None, &config);
 
         assert_eq!(genome.get_nodes().len(), 4);
         assert_eq!(genome.get_connections().len(), 4);
@@ -47,10 +47,10 @@ mod tests {
     #[test]
     fn get_network() {
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid", 0.0, Some(1)),
-            Node::new(NeuronType::Hidden, "hidden_uuid", 0.5, Some(2)),
-            Node::new(NeuronType::Hidden, "hidden_2_uuid", 0.4, Some(3)),
-            Node::new(NeuronType::Output, "output_uuid", 0.3, Some(4)),
+            Node::new(NeuronType::Input, "input_uuid", 0.0, None, Some(1)),
+            Node::new(NeuronType::Hidden, "hidden_uuid", 0.5, Some(Activation::Sigmoid), Some(2)),
+            Node::new(NeuronType::Hidden, "hidden_2_uuid", 0.4, Some(Activation::Sigmoid), Some(3)),
+            Node::new(NeuronType::Output, "output_uuid", 0.3, Some(Activation::Sigmoid), Some(4)),
         ];
         let connections = vec![
             Connection::new("input_uuid", "output_uuid", 0.9),
@@ -78,8 +78,8 @@ mod tests {
         };
 
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid", 0.0, Some(1)),
-            Node::new(NeuronType::Output, "output_uuid", -0.3, Some(2)),
+            Node::new(NeuronType::Input, "input_uuid", 0.0, None, Some(1)),
+            Node::new(NeuronType::Output, "output_uuid", -0.3, None, Some(2)),
         ];
         let connections = vec![Connection::new("input_uuid", "output_uuid", 0.7)];
 
@@ -98,8 +98,8 @@ mod tests {
         };
 
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid", 0f64, None),
-            Node::new(NeuronType::Output, "output_uuid", -0.3f64, None),
+            Node::new(NeuronType::Input, "input_uuid", 0f64, None, None),
+            Node::new(NeuronType::Output, "output_uuid", -0.3f64, None, None),
         ];
         let connections = vec![Connection::new("input_uuid", "output_uuid", 0.7f64)];
 
@@ -115,9 +115,9 @@ mod tests {
     #[test]
     fn mutate_connection_enabled() {
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid_1", 0f64, None),
-            Node::new(NeuronType::Input, "input_uuid_2", 0f64, None),
-            Node::new(NeuronType::Output, "output_uuid", 0f64, None),
+            Node::new(NeuronType::Input, "input_uuid_1", 0f64, None, None),
+            Node::new(NeuronType::Input, "input_uuid_2", 0f64, None, None),
+            Node::new(NeuronType::Output, "output_uuid", 0f64, None, None),
         ];
         let connections = vec![
             Connection::new("input_uuid_1", "output_uuid", 0f64),
@@ -145,10 +145,10 @@ mod tests {
     #[test]
     fn mutate_crossover() {
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None),
-            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None),
-            Node::new(NeuronType::Hidden, "hidden_1", 0.0, None),
-            Node::new(NeuronType::Output, "output_uuid", 0.0, None),
+            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None, None),
+            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None, None),
+            Node::new(NeuronType::Hidden, "hidden_1", 0.0, None, None),
+            Node::new(NeuronType::Output, "output_uuid", 0.0, None, None),
         ];
         let connections = vec![
             Connection::new("input_uuid_1", "output_uuid", 0.0),
@@ -160,10 +160,10 @@ mod tests {
         let genome = Genome::new(nodes, connections);
 
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None),
-            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None),
-            Node::new(NeuronType::Hidden, "hidden_2", 0.0, None),
-            Node::new(NeuronType::Output, "output_uuid", 0.0, None),
+            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None, None),
+            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None, None),
+            Node::new(NeuronType::Hidden, "hidden_2", 0.0, None, None),
+            Node::new(NeuronType::Output, "output_uuid", 0.0, None, None),
         ];
         let connections = vec![
             Connection::new("input_uuid_1", "output_uuid", 0.0),
@@ -183,10 +183,10 @@ mod tests {
     #[test]
     fn get_distance() {
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None),
-            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None),
-            Node::new(NeuronType::Hidden, "hidden_1", 0.0, None),
-            Node::new(NeuronType::Output, "output_uuid", 0.0, None),
+            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None, None),
+            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None, None),
+            Node::new(NeuronType::Hidden, "hidden_1", 0.0, None, None),
+            Node::new(NeuronType::Output, "output_uuid", 0.0, None, None),
         ];
         let connections = vec![
             Connection::new("input_uuid_1", "output_uuid", 0.0),
@@ -198,10 +198,10 @@ mod tests {
         let genome = Genome::new(nodes, connections);
 
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None),
-            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None),
-            Node::new(NeuronType::Hidden, "hidden_2", 0.0, None),
-            Node::new(NeuronType::Output, "output_uuid", 0.0, None),
+            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None, None),
+            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None, None),
+            Node::new(NeuronType::Hidden, "hidden_2", 0.0, None, None),
+            Node::new(NeuronType::Output, "output_uuid", 0.0, None, None),
         ];
         let connections = vec![
             Connection::new("input_uuid_1", "output_uuid", 0.0),
@@ -215,11 +215,11 @@ mod tests {
         assert_eq!(genome.get_distance(&child_genome), 1);
 
         let nodes = vec![
-            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None),
-            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None),
-            Node::new(NeuronType::Hidden, "hidden_2", 0.0, None),
-            Node::new(NeuronType::Hidden, "hidden_3", 0.0, None),
-            Node::new(NeuronType::Output, "output_uuid", 0.0, None),
+            Node::new(NeuronType::Input, "input_uuid_1", 0.0, None, None),
+            Node::new(NeuronType::Input, "input_uuid_2", 0.0, None, None),
+            Node::new(NeuronType::Hidden, "hidden_2", 0.0, None, None),
+            Node::new(NeuronType::Hidden, "hidden_3", 0.0, None, None),
+            Node::new(NeuronType::Output, "output_uuid", 0.0, None, None),
         ];
         let connections = vec![
             Connection::new("input_uuid_1", "output_uuid", 0.0),

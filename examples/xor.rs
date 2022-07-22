@@ -1,6 +1,6 @@
 use log::LevelFilter;
 
-use vivalaakam_neat_rs::{Config, Genome, Organism};
+use vivalaakam_neat_rs::{Activation, Config, Genome, Organism};
 
 fn get_fitness(organism: &mut Organism) {
     let mut distance: f64 = 0f64;
@@ -18,11 +18,8 @@ fn get_fitness(organism: &mut Organism) {
 
 fn main() {
     let _ = env_logger::builder()
-        // Include all events in tests
         .filter_level(LevelFilter::Info)
-        // Ensure events are captured by `cargo test`
         .is_test(true)
-        // Ignore errors initializing the logger if tests race to configure it
         .try_init();
 
     let population_size = 50;
@@ -39,9 +36,10 @@ fn main() {
         node_bias_prob: 0.15,
         node_bias_delta: 0.1,
         node_bias: 1.0,
+        node_activation_prob: 0.15,
     };
 
-    let genome = Genome::generate_genome(2, 1, vec![], &config);
+    let genome = Genome::generate_genome(2, 1, vec![], Some(Activation::Sigmoid), &config);
 
     while population.len() < population_size {
         match genome.mutate_connection_weight(&config) {

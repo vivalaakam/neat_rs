@@ -13,6 +13,7 @@ use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
 use crate::node::Node;
 use crate::utils::{get_random, get_random_position, get_random_weight};
+use crate::Activation;
 
 #[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Genome {
@@ -32,6 +33,7 @@ impl Genome {
         inputs: usize,
         outputs: usize,
         hidden: Vec<usize>,
+        activation: Option<Activation>,
         config: &Config,
     ) -> Self {
         let mut nodes = vec![];
@@ -44,6 +46,7 @@ impl Genome {
                 NeuronType::Input,
                 format!("input_{i}"),
                 0f64,
+                None,
                 Some(counter),
             ));
             counter += 1;
@@ -59,6 +62,7 @@ impl Genome {
                     NeuronType::Input,
                     make_id(6),
                     get_random_weight(config.node_bias),
+                    activation,
                     Some(counter),
                 );
 
@@ -85,6 +89,7 @@ impl Genome {
                 NeuronType::Output,
                 format!("output_{i}"),
                 get_random_weight(config.node_bias),
+                activation,
                 Some(counter),
             );
 
@@ -238,6 +243,7 @@ impl Genome {
                 node.get_type(),
                 node.get_bias(),
                 node.get_position(),
+                node.get_activation(),
                 connections
                     .into_iter()
                     .map(|conn| {
@@ -287,6 +293,11 @@ impl Genome {
             debug!("mutate connection_weight: {}", json!(genome));
         }
 
+        if get_random() < config.node_activation_prob {
+            genome = genome.mutate_node_activation(config).unwrap_or(genome);
+            debug!("mutate connection_weight: {}", json!(genome));
+        }
+
         Some(genome)
     }
 
@@ -297,10 +308,14 @@ impl Genome {
 
         let connection = self.connections[conn].clone();
 
+        let activations = Activation::to_vec();
+        let activation = get_random_position(activations.len());
+
         let node = Node::new(
             NeuronType::Hidden,
             make_id(6),
             get_random_weight(config.node_bias),
+            Some(activations[activation]),
             None,
         );
         let from = Connection::new(connection.get_from(), node.get_id(), 1f64);
@@ -382,6 +397,37 @@ impl Genome {
         match genome.nodes.get_mut(index.unwrap()) {
             Some(node) => {
                 node.set_bias(node.get_bias() + get_random_weight(config.node_bias_delta));
+            }
+            None => {}
+        }
+
+        Some(genome)
+    }
+
+    pub fn mutate_node_activation(&self, _config: &Config) -> Option<Self> {
+        let mut genome = self.clone();
+
+        let mut max_retry = 10;
+        let mut index = None;
+        while max_retry > 0 && index.is_none() {
+            let conn = get_random_position(self.nodes.len());
+            let node = self.nodes[conn].clone();
+
+            max_retry -= 1;
+            if node.get_type() == NeuronType::Hidden {
+                index = Some(conn)
+            }
+        }
+
+        if index.is_none() {
+            return None;
+        }
+
+        match genome.nodes.get_mut(index.unwrap()) {
+            Some(node) => {
+                let activations = Activation::to_vec();
+                let activation = get_random_position(activations.len());
+                node.set_activation(activations[activation]);
             }
             None => {}
         }

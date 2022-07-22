@@ -1,25 +1,28 @@
 use serde::{Deserialize, Serialize};
 
+use crate::activation::Activation;
 use crate::neuron_type::NeuronType;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
     id: String,
     bias: f64,
+    activation: Activation,
     neuron_type: NeuronType,
     position: Option<usize>,
 }
 
 impl Node {
-    pub fn new<T>(neuron_type: NeuronType, id: T, bias: f64, position: Option<usize>) -> Self
-    where
-        T: Into<String>,
+    pub fn new<T>(neuron_type: NeuronType, id: T, bias: f64, activation: Option<Activation>, position: Option<usize>) -> Self
+        where
+            T: Into<String>,
     {
         Node {
             id: id.into(),
             neuron_type,
             position,
             bias,
+            activation: activation.unwrap_or_default(),
         }
     }
 
@@ -45,5 +48,13 @@ impl Node {
 
     pub fn get_bias(&self) -> f64 {
         self.bias
+    }
+
+    pub fn set_activation(&mut self, activation: Activation) {
+        self.activation = activation;
+    }
+
+    pub fn get_activation(&self) -> Activation {
+        self.activation
     }
 }

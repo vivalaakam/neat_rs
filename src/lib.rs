@@ -16,3 +16,4 @@ pub use genome::Genome;
 pub use neuron_type::NeuronType;
 pub use node::Node;
 pub use organism::Organism;
+pub use activation::Activation;

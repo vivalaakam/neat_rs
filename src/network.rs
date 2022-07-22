@@ -1,4 +1,3 @@
-use crate::activation::sigmoid;
 use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
 
@@ -44,7 +43,7 @@ impl Network {
                             state[connection.get_from()] * connection.get_weight()
                     }
 
-                    state[neuron.get_position()] = sigmoid(state[neuron.get_position()]);
+                    state[neuron.get_position()] = neuron.activate(state[neuron.get_position()]);
                 }
             }
         }

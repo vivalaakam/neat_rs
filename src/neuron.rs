@@ -1,3 +1,4 @@
+use crate::Activation;
 use crate::link::Link;
 use crate::neuron_type::NeuronType;
 
@@ -7,6 +8,7 @@ pub struct Neuron {
     bias: f64,
     neuron_type: NeuronType,
     connections: Vec<Link>,
+    activation: Activation,
 }
 
 impl Neuron {
@@ -14,6 +16,7 @@ impl Neuron {
         neuron_type: NeuronType,
         bias: f64,
         position: usize,
+        activation: Activation,
         connections: Vec<Link>,
     ) -> Self {
         Neuron {
@@ -21,6 +24,7 @@ impl Neuron {
             position,
             bias,
             connections,
+            activation,
         }
     }
 
@@ -38,5 +42,9 @@ impl Neuron {
 
     pub fn get_connections(&self) -> Vec<Link> {
         self.connections.to_vec()
+    }
+
+    pub fn activate(&self, value: f64) -> f64 {
+        self.activation.activate(value)
     }
 }
