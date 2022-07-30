@@ -34,8 +34,13 @@ impl Organism {
         self.fitness
     }
 
-    pub fn mutate(&self, child: &Organism, config: &Config) -> Option<Self> {
-        match self.genome.mutate(&child.genome, config) {
+    pub fn mutate(&self, child: Option<&Organism>, config: &Config) -> Option<Self> {
+        let genome = match child {
+            None => None,
+            Some(organism) => Some(&organism.genome),
+        };
+
+        match self.genome.mutate(genome, config) {
             None => None,
             Some(genome) => Some(Organism::new(genome)),
         }

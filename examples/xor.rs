@@ -60,13 +60,13 @@ fn main() {
         let mut new_population = vec![];
 
         for i in 0..population.len() {
-            let j = if i > 0 {
-                (i - 1) / 2
+            let child = if i > 0 {
+                population.get((i - 1) / 2)
             } else {
-                population.len() - 1
+                None
             };
 
-            match population[i].mutate(&population[j], &config) {
+            match population[i].mutate(child, &config) {
                 None => {}
                 Some(organism) => new_population.push(organism),
             }

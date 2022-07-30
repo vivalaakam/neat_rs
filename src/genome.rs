@@ -260,12 +260,12 @@ impl Genome {
         Network::new(neurons)
     }
 
-    pub fn mutate(&self, child: &Genome, config: &Config) -> Option<Self> {
+    pub fn mutate(&self, child: Option<&Genome>, config: &Config) -> Option<Self> {
         let mut genome = self.clone();
         debug!("mutate enter: {}", json!(genome));
 
-        if get_random() < config.crossover {
-            genome = genome.mutate_crossover(child).unwrap_or(genome);
+        if child.is_some() && get_random() < config.crossover {
+            genome = genome.mutate_crossover(child.unwrap()).unwrap_or(genome);
             debug!("mutate crossover: {}", json!(genome));
         }
 
