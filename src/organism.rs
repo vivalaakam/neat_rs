@@ -10,6 +10,7 @@ pub struct Organism {
     fitness: f64,
     stagnation: usize,
     genotype: Vec<String>,
+    id: Option<String>,
 }
 
 impl Organism {
@@ -30,6 +31,7 @@ impl Organism {
             fitness: 0f64,
             stagnation: 0,
             genotype,
+            id: None,
         }
     }
 
@@ -80,6 +82,14 @@ impl Organism {
 
     pub fn get_stagnation(&mut self) -> usize {
         self.stagnation
+    }
+
+    pub fn set_id(&mut self, id: String) {
+        self.id = Some(id)
+    }
+
+    pub fn get_id(&self) -> Option<&String> {
+        self.id.as_ref()
     }
 }
 

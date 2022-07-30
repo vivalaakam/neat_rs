@@ -1,6 +1,6 @@
 [package]
 name = "vivalaakam_neat_rs"
-version = "0.1.9"
+version = "0.1.10"
 edition = "2021"
 authors = ["Andrey Makarov <viva.la.akam@gmail.com>"]
 description = "Library for calculation some things"
