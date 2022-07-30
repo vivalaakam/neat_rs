@@ -1,4 +1,5 @@
 use log::LevelFilter;
+use new_york_utils::levenshtein;
 
 use vivalaakam_neat_rs::{Activation, Config, Genome, Organism};
 
@@ -60,11 +61,24 @@ fn main() {
         let mut new_population = vec![];
 
         for i in 0..population.len() {
-            let child = if i > 0 {
-                population.get((i - 1) / 2)
-            } else {
-                None
-            };
+            let mut child = None;
+
+            let mut min_score = i32::MAX;
+            let mut min_j = i;
+
+            for j in i + 1..population.len() {
+                let score = levenshtein(population[i].get_genotype(), population[j].get_genotype())
+                    .unwrap_or(i32::MAX);
+
+                if score > 0 && score < min_score {
+                    min_score = score;
+                    min_j = j;
+                }
+            }
+
+            if min_j != i {
+                child = population.get(min_j);
+            }
 
             match population[i].mutate(child, &config) {
                 None => {}

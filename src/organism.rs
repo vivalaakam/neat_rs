@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use crate::network::Network;
-use crate::{Config, Genome};
+use crate::{Config, Genome, NeuronType};
 
 #[derive(Clone)]
 pub struct Organism {
@@ -9,16 +9,27 @@ pub struct Organism {
     pub network: Network,
     fitness: f64,
     stagnation: usize,
+    genotype: Vec<String>,
 }
 
 impl Organism {
     pub fn new(genome: Genome) -> Self {
         let network = genome.get_network();
+        let mut genotype = genome
+            .get_nodes()
+            .into_iter()
+            .filter(|node| node.get_type() == NeuronType::Hidden)
+            .map(|node| node.get_id())
+            .collect::<Vec<_>>();
+
+        genotype.sort();
+
         Organism {
             genome,
             network,
             fitness: 0f64,
             stagnation: 0,
+            genotype,
         }
     }
 
@@ -32,6 +43,10 @@ impl Organism {
 
     pub fn get_fitness(&self) -> f64 {
         self.fitness
+    }
+
+    pub fn get_genotype(&self) -> Vec<String> {
+        self.genotype.to_vec()
     }
 
     pub fn mutate(&self, child: Option<&Organism>, config: &Config) -> Option<Self> {
