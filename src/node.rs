@@ -13,9 +13,15 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new<T>(neuron_type: NeuronType, id: T, bias: f64, activation: Option<Activation>, position: Option<usize>) -> Self
-        where
-            T: Into<String>,
+    pub fn new<T>(
+        neuron_type: NeuronType,
+        id: T,
+        bias: f64,
+        activation: Option<Activation>,
+        position: Option<usize>,
+    ) -> Self
+    where
+        T: Into<String>,
     {
         Node {
             id: id.into(),

@@ -84,7 +84,14 @@ fn main() {
         population.sort();
         population = population[0..population_size].to_vec();
 
-        println!("{epoch}: {}", population[0].fitness);
+        if let Some(best) = population.get_mut(0) {
+            best.inc_stagnation();
+            println!(
+                "{epoch}: {:.8} {}",
+                best.get_fitness(),
+                best.get_stagnation()
+            );
+        }
         epoch += 1;
     }
 

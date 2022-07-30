@@ -1,6 +1,6 @@
-use crate::Activation;
 use crate::link::Link;
 use crate::neuron_type::NeuronType;
+use crate::Activation;
 
 #[derive(Default, Clone)]
 pub struct Neuron {

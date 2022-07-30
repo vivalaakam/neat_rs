@@ -6,8 +6,9 @@ use crate::{Config, Genome};
 #[derive(Clone)]
 pub struct Organism {
     pub genome: Genome,
-    pub fitness: f64,
     pub network: Network,
+    fitness: f64,
+    stagnation: usize,
 }
 
 impl Organism {
@@ -15,8 +16,9 @@ impl Organism {
         let network = genome.get_network();
         Organism {
             genome,
-            fitness: 0f64,
             network,
+            fitness: 0f64,
+            stagnation: 0,
         }
     }
 
@@ -46,6 +48,18 @@ impl Organism {
     pub fn from_json(&self, data: String) -> Self {
         let genome = serde_json::from_str::<Genome>(data.as_str()).unwrap();
         Organism::new(genome)
+    }
+
+    pub fn set_stagnation(&mut self, stagnation: usize) {
+        self.stagnation = stagnation
+    }
+
+    pub fn inc_stagnation(&mut self) {
+        self.stagnation += 1;
+    }
+
+    pub fn get_stagnation(&mut self) -> usize {
+        self.stagnation
     }
 }
 

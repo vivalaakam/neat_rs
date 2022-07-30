@@ -48,9 +48,27 @@ mod tests {
     fn get_network() {
         let nodes = vec![
             Node::new(NeuronType::Input, "input_uuid", 0.0, None, Some(1)),
-            Node::new(NeuronType::Hidden, "hidden_uuid", 0.5, Some(Activation::Sigmoid), Some(2)),
-            Node::new(NeuronType::Hidden, "hidden_2_uuid", 0.4, Some(Activation::Sigmoid), Some(3)),
-            Node::new(NeuronType::Output, "output_uuid", 0.3, Some(Activation::Sigmoid), Some(4)),
+            Node::new(
+                NeuronType::Hidden,
+                "hidden_uuid",
+                0.5,
+                Some(Activation::Sigmoid),
+                Some(2),
+            ),
+            Node::new(
+                NeuronType::Hidden,
+                "hidden_2_uuid",
+                0.4,
+                Some(Activation::Sigmoid),
+                Some(3),
+            ),
+            Node::new(
+                NeuronType::Output,
+                "output_uuid",
+                0.3,
+                Some(Activation::Sigmoid),
+                Some(4),
+            ),
         ];
         let connections = vec![
             Connection::new("input_uuid", "output_uuid", 0.9),

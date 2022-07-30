@@ -1,4 +1,5 @@
 mod activation;
+mod argmax;
 mod config;
 mod connection;
 mod genome;
@@ -8,12 +9,15 @@ mod neuron;
 mod neuron_type;
 mod node;
 mod organism;
+mod softmax;
 mod utils;
 
+pub use activation::Activation;
+pub use argmax::argmax;
 pub use config::Config;
 pub use connection::Connection;
 pub use genome::Genome;
 pub use neuron_type::NeuronType;
 pub use node::Node;
 pub use organism::Organism;
-pub use activation::Activation;
+pub use softmax::softmax;

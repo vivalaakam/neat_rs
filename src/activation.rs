@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use strum::{IntoEnumIterator, EnumIter};
+use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, EnumIter)]
 pub enum Activation {
@@ -39,11 +39,8 @@ impl Activation {
             Activation::Gaussian => (-1f64 * x.powi(2)).exp(),
             Activation::Selu => {
                 let alpha = 1.6732632423543772848170429916717;
-                (if x > 0f64 {
-                    x
-                } else {
-                    alpha * x.exp() - alpha
-                }) * 1.0507009873554804934193349852946
+                (if x > 0f64 { x } else { alpha * x.exp() - alpha })
+                    * 1.0507009873554804934193349852946
             }
         }
     }
