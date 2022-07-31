@@ -558,3 +558,9 @@ impl Genome {
         json!(self).to_string()
     }
 }
+
+impl From<String> for Genome {
+    fn from(genome: String) -> Self {
+        serde_json::from_str(genome.as_str()).unwrap()
+    }
+}
