@@ -626,3 +626,9 @@ impl From<String> for Genome {
         serde_json::from_str(genome.as_str()).unwrap()
     }
 }
+
+impl From<&str> for Genome {
+    fn from(genome: &str) -> Self {
+        serde_json::from_str(genome).unwrap()
+    }
+}

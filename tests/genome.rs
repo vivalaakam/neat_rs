@@ -31,6 +31,24 @@ mod tests {
     }
 
     #[test]
+    fn from_string() {
+        let string = r#"{"connections":[{"enabled":true,"from":"input_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_2_uuid","weight":0.0},{"enabled":true,"from":"hidden_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"hidden_2_uuid","to":"output_uuid","weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":"input_uuid","neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":"hidden_uuid","neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":"hidden_2_uuid","neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":"output_uuid","neuron_type":"Output","position":3}]}"#;
+        let genome: Genome = string.to_string().into();
+
+        assert_eq!(genome.get_nodes().len(), 4);
+        assert_eq!(genome.get_connections().len(), 5);
+    }
+
+    #[test]
+    fn from_str() {
+        let string = r#"{"connections":[{"enabled":true,"from":"input_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_2_uuid","weight":0.0},{"enabled":true,"from":"hidden_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"hidden_2_uuid","to":"output_uuid","weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":"input_uuid","neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":"hidden_uuid","neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":"hidden_2_uuid","neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":"output_uuid","neuron_type":"Output","position":3}]}"#;
+        let genome: Genome = string.into();
+
+        assert_eq!(genome.get_nodes().len(), 4);
+        assert_eq!(genome.get_connections().len(), 5);
+    }
+
+    #[test]
     fn generate_genome() {
         let config = Config {
             node_bias: 1.0,
