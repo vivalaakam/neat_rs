@@ -216,16 +216,23 @@ impl Genome {
         let mut neurons = vec![];
         let mut conns: HashMap<String, Vec<&Connection>> = HashMap::new();
         let mut positions: HashMap<String, usize> = HashMap::new();
+        let mut enabled: HashSet<String> = HashSet::new();
 
         for node in &self.nodes {
             conns.insert(node.get_id(), vec![]);
             positions.insert(node.get_id(), node.get_position());
+            if node.get_enabled() {
+                enabled.insert(node.get_id());
+            }
         }
 
         debug!("get_network conns: {:?}", conns);
 
         for connection in &self.connections {
-            if connection.get_enabled() == true {
+            if connection.get_enabled() == true
+                && enabled.contains(&connection.get_to())
+                && enabled.contains(&connection.get_from())
+            {
                 debug!("get_network connection.get_to(): {}", connection.get_to());
                 let nodes = conns.get_mut(&connection.get_to()).unwrap();
                 nodes.push(connection);
@@ -288,6 +295,11 @@ impl Genome {
             debug!("mutate connection_weight: {}", json!(genome));
         }
 
+        if get_random() < config.node_enabled {
+            genome = genome.mutate_node_enabled(config).unwrap_or(genome);
+            debug!("mutate node_enabled: {}", json!(genome));
+        }
+
         if get_random() < config.node_bias_prob {
             genome = genome.mutate_node_bias(config).unwrap_or(genome);
             debug!("mutate connection_weight: {}", json!(genome));
@@ -302,6 +314,10 @@ impl Genome {
     }
 
     pub fn mutate_add_node(&self, config: &Config) -> Option<Self> {
+        if self.nodes.len() >= config.node_max {
+            return None;
+        }
+
         let mut genome = self.clone();
 
         let conn = get_random_position(self.connections.len());
@@ -331,6 +347,10 @@ impl Genome {
     }
 
     pub fn mutate_add_connection(&self, config: &Config) -> Option<Self> {
+        if self.connections.len() >= config.connection_max {
+            return None;
+        }
+
         let mut genome = self.clone();
         let mut exists_connections = HashSet::new();
 
@@ -342,8 +362,14 @@ impl Genome {
 
         for i in 0..self.nodes.len() - 1 {
             let i_node = self.nodes.get(i).unwrap();
+            if i_node.get_enabled() != true {
+                continue;
+            }
             for j in i + 1..self.nodes.len() {
                 let j_node = self.nodes.get(j).unwrap();
+                if j_node.get_enabled() != true {
+                    continue;
+                }
 
                 let conn_id = match (i_node.get_type(), j_node.get_type()) {
                     (NeuronType::Input, NeuronType::Hidden)
@@ -378,17 +404,16 @@ impl Genome {
     pub fn mutate_node_bias(&self, config: &Config) -> Option<Self> {
         let mut genome = self.clone();
 
-        let mut max_retry = 10;
-        let mut index = None;
-        while max_retry > 0 && index.is_none() {
-            let conn = get_random_position(self.nodes.len());
-            let node = self.nodes[conn].clone();
-
-            max_retry -= 1;
-            if node.get_type() != NeuronType::Input {
-                index = Some(conn)
-            }
-        }
+        let applicants = genome
+            .nodes
+            .iter()
+            .filter(|node| node.get_type() != NeuronType::Input)
+            .map(|node| node.get_id())
+            .collect::<Vec<_>>();
+        let applicant = applicants
+            .get(get_random_position(applicants.len()))
+            .unwrap();
+        let index = genome.get_node_position_by_id(applicant.to_string());
 
         if index.is_none() {
             return None;
@@ -407,17 +432,16 @@ impl Genome {
     pub fn mutate_node_activation(&self, _config: &Config) -> Option<Self> {
         let mut genome = self.clone();
 
-        let mut max_retry = 10;
-        let mut index = None;
-        while max_retry > 0 && index.is_none() {
-            let conn = get_random_position(self.nodes.len());
-            let node = self.nodes[conn].clone();
-
-            max_retry -= 1;
-            if node.get_type() == NeuronType::Hidden {
-                index = Some(conn)
-            }
-        }
+        let applicants = genome
+            .nodes
+            .iter()
+            .filter(|node| node.get_type() == NeuronType::Input)
+            .map(|node| node.get_id())
+            .collect::<Vec<_>>();
+        let applicant = applicants
+            .get(get_random_position(applicants.len()))
+            .unwrap();
+        let index = genome.get_node_position_by_id(applicant.to_string());
 
         if index.is_none() {
             return None;
@@ -428,6 +452,34 @@ impl Genome {
                 let activations = Activation::to_vec();
                 let activation = get_random_position(activations.len());
                 node.set_activation(activations[activation]);
+            }
+            None => {}
+        }
+
+        Some(genome)
+    }
+
+    pub fn mutate_node_enabled(&self, _config: &Config) -> Option<Self> {
+        let mut genome = self.clone();
+
+        let applicants = genome
+            .nodes
+            .iter()
+            .filter(|node| node.get_type() != NeuronType::Input)
+            .map(|node| node.get_id())
+            .collect::<Vec<_>>();
+        let applicant = applicants
+            .get(get_random_position(applicants.len()))
+            .unwrap();
+        let index = genome.get_node_position_by_id(applicant.to_string());
+
+        if index.is_none() {
+            return None;
+        }
+
+        match genome.nodes.get_mut(index.unwrap()) {
+            Some(node) => {
+                node.toggle_enabled();
             }
             None => {}
         }
@@ -489,7 +541,7 @@ impl Genome {
 
         let conn = indicies[get_random_position(indicies.len())];
 
-        genome.connections[conn].toggle_edited();
+        genome.connections[conn].toggle_enabled();
 
         Some(genome)
     }
@@ -556,6 +608,16 @@ impl Genome {
 
     pub fn as_json(&self) -> String {
         json!(self).to_string()
+    }
+
+    pub fn get_node_position_by_id(&self, id: String) -> Option<usize> {
+        self.nodes.iter().position(|node| node.get_id() == id)
+    }
+
+    pub fn get_connection_position_by_id(&self, id: String) -> Option<usize> {
+        self.connections
+            .iter()
+            .position(|connection| connection.get_id() == id)
     }
 }
 

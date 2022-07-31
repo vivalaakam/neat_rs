@@ -21,7 +21,7 @@ impl Connection {
         }
     }
 
-    pub fn toggle_edited(&mut self) {
+    pub fn toggle_enabled(&mut self) {
         self.enabled = !self.enabled
     }
 

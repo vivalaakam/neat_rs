@@ -38,6 +38,9 @@ fn main() {
         node_bias_delta: 0.1,
         node_bias: 1.0,
         node_activation_prob: 0.15,
+        connection_max: 10000,
+        node_max: 1000,
+        node_enabled: 0.5,
     };
 
     let genome = Genome::generate_genome(2, 1, vec![], Some(Activation::Sigmoid), &config);

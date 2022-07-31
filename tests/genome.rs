@@ -26,7 +26,7 @@ mod tests {
         assert_eq!(genome.get_connections().len(), 5);
         assert_eq!(
             json!(genome).to_string(),
-            r#"{"connections":[{"enabled":true,"from":"input_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_2_uuid","weight":0.0},{"enabled":true,"from":"hidden_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"hidden_2_uuid","to":"output_uuid","weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"id":"input_uuid","neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"id":"hidden_uuid","neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"id":"hidden_2_uuid","neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"id":"output_uuid","neuron_type":"Output","position":3}]}"#
+            r#"{"connections":[{"enabled":true,"from":"input_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_uuid","weight":0.0},{"enabled":true,"from":"input_uuid","to":"hidden_2_uuid","weight":0.0},{"enabled":true,"from":"hidden_uuid","to":"output_uuid","weight":0.0},{"enabled":true,"from":"hidden_2_uuid","to":"output_uuid","weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":"input_uuid","neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":"hidden_uuid","neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":"hidden_2_uuid","neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":"output_uuid","neuron_type":"Output","position":3}]}"#
         );
     }
 
@@ -92,6 +92,7 @@ mod tests {
     fn add_node() {
         let config = Config {
             node_bias: 1.0,
+            node_max: 10,
             ..Config::default()
         };
 
@@ -196,6 +197,42 @@ mod tests {
 
         assert_eq!(new_genome.get_connections().len(), 6);
         assert_eq!(new_genome.get_nodes().len(), 5);
+    }
+
+    #[test]
+    fn mutate_node_enabled() {
+        let config = Config::default();
+
+        let nodes = vec![
+            Node::new(NeuronType::Input, "input_uuid", 0f64, None, None),
+            Node::new(
+                NeuronType::Hidden,
+                "hidden_uuid",
+                0.75f64,
+                Some(Activation::Relu),
+                None,
+            ),
+            Node::new(
+                NeuronType::Output,
+                "output_uuid",
+                2f64,
+                Some(Activation::Relu),
+                None,
+            ),
+        ];
+        let connections = vec![
+            Connection::new("input_uuid", "output_uuid", 1.5f64),
+            Connection::new("input_uuid", "hidden_uuid", 2f64),
+            Connection::new("hidden_uuid", "output_uuid", 3f64),
+        ];
+
+        let genome = Genome::new(nodes, connections);
+        let network = genome.get_network();
+        assert_eq!(network.activate(vec![1.0]), vec![11.75]);
+
+        let new_genome = genome.mutate_node_enabled(&config).unwrap();
+        let network = new_genome.get_network();
+        assert_eq!(network.activate(vec![1.0]), vec![3.5]);
     }
 
     #[test]

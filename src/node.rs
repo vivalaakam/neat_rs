@@ -7,6 +7,7 @@ use crate::neuron_type::NeuronType;
 pub struct Node {
     id: String,
     bias: f64,
+    enabled: bool,
     activation: Activation,
     neuron_type: NeuronType,
     position: Option<usize>,
@@ -26,6 +27,7 @@ impl Node {
         Node {
             id: id.into(),
             neuron_type,
+            enabled: true,
             position,
             bias,
             activation: activation.unwrap_or_default(),
@@ -62,5 +64,13 @@ impl Node {
 
     pub fn get_activation(&self) -> Activation {
         self.activation
+    }
+
+    pub fn toggle_enabled(&mut self) {
+        self.enabled = !self.enabled
+    }
+
+    pub fn get_enabled(&self) -> bool {
+        self.enabled
     }
 }
