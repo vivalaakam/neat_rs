@@ -1,4 +1,4 @@
-pub fn argmax(arr: Vec<f64>) -> f64 {
+pub fn argmax(arr: Vec<f64>) -> usize {
     let mut maxi = 0;
     let mut max = arr[0];
 
@@ -9,5 +9,5 @@ pub fn argmax(arr: Vec<f64>) -> f64 {
         }
     }
 
-    maxi as f64
+    maxi
 }

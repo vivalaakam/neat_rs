@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use crate::network::Network;
 use crate::{Config, Genome, NeuronType};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Organism {
     pub genome: Genome,
     pub network: Network,
