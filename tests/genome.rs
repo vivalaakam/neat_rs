@@ -304,9 +304,13 @@ mod tests {
         let network = genome.get_network();
         assert_eq!(network.activate(vec![1.0]), vec![11.75]);
 
-        let new_genome = genome.mutate_node_enabled(&config).unwrap();
-        let network = new_genome.get_network();
-        assert_eq!(network.activate(vec![1.0]), vec![3.5]);
+        match genome.mutate_node_enabled(&config) {
+            None => {}
+            Some(new_genome) => {
+                let network = new_genome.get_network();
+                assert_eq!(network.activate(vec![1.0]), vec![3.5]);
+            }
+        }
     }
 
     #[test]
