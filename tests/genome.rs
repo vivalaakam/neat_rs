@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use new_york_utils::Matrix;
     use serde_json::json;
 
     use vivalaakam_neat_rs::{Activation, Config, Connection, Genome, NeuronType, Node};
@@ -104,6 +105,61 @@ mod tests {
         assert_eq!(network.activate(vec![1.2]), vec![0.9998430839883321]);
         assert_eq!(network.activate(vec![0.5]), vec![0.9963938631650396]);
         assert_eq!(network.activate(vec![0.1]), vec![0.9771929741676869]);
+    }
+
+    #[test]
+    fn get_network_matrix() {
+        let nodes = vec![
+            Node::new(NeuronType::Input, "input_uuid", 0.0, None, Some(1)),
+            Node::new(
+                NeuronType::Hidden,
+                "hidden_uuid",
+                0.5,
+                Some(Activation::Sigmoid),
+                Some(2),
+            ),
+            Node::new(
+                NeuronType::Hidden,
+                "hidden_2_uuid",
+                0.4,
+                Some(Activation::Sigmoid),
+                Some(3),
+            ),
+            Node::new(
+                NeuronType::Output,
+                "output_uuid",
+                0.3,
+                Some(Activation::Sigmoid),
+                Some(4),
+            ),
+        ];
+        let connections = vec![
+            Connection::new("input_uuid", "output_uuid", 0.9),
+            Connection::new("input_uuid", "hidden_uuid", 0.7),
+            Connection::new("input_uuid", "hidden_2_uuid", 0.5),
+            Connection::new("hidden_uuid", "output_uuid", 0.3),
+            Connection::new("hidden_2_uuid", "output_uuid", 0.1),
+        ];
+
+        let genome = Genome::new(nodes, connections);
+
+        let network = genome.get_network();
+
+        let mut inputs = Matrix::new(1, 4);
+        let _ = inputs.set_data(vec![1.0, 1.2, 0.5, 0.1]);
+
+        let mut outputs = Matrix::new(1, 4);
+        let _ = outputs.set_data(vec![
+            0.9996177487505071,
+            0.9998430839883321,
+            0.9963938631650396,
+            0.9771929741676869,
+        ]);
+
+        assert_eq!(
+            format!("{:?}", network.activate_matrix(&inputs)),
+            format!("{:?}", outputs)
+        );
     }
 
     #[test]

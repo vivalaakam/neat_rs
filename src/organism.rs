@@ -1,3 +1,4 @@
+use new_york_utils::Matrix;
 use std::cmp::Ordering;
 
 use crate::network::Network;
@@ -37,6 +38,10 @@ impl Organism {
 
     pub fn activate(&self, params: Vec<f64>) -> Vec<f64> {
         self.network.activate(params)
+    }
+
+    pub fn activate_matrix(&self, params: &Matrix<f64>) -> Matrix<f64> {
+        self.network.activate_matrix(params)
     }
 
     pub fn set_fitness(&mut self, fitness: f64) {

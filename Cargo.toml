@@ -18,3 +18,9 @@ serde = { version = "1.0", features = ["derive"] }
 strum = { version = "0.24", features = ["derive"] }
 getrandom = { version = "0.2.7", features = ["js"] }
 
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "activate"
+harness = false
