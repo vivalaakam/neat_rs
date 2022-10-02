@@ -1,3 +1,4 @@
+use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
 
 pub fn get_random_position(len: usize) -> usize {
@@ -10,4 +11,11 @@ pub fn get_random_weight(weight: f64) -> f64 {
 
 pub fn get_random() -> f32 {
     rand::thread_rng().gen()
+}
+
+pub fn get_random_range<T>(from: T, to: T) -> T
+where
+    T: SampleUniform + PartialOrd,
+{
+    rand::thread_rng().gen_range(from..to)
 }

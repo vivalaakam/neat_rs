@@ -34,6 +34,7 @@ fn main() {
         connection_weight: 1.0,
         connection_weight_prob: 0.8,
         connection_weight_delta: 0.1,
+        connection_weight_iter: 5,
         node_bias_prob: 0.15,
         node_bias_delta: 0.1,
         node_bias: 1.0,

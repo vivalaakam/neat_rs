@@ -12,7 +12,7 @@ use crate::network::Network;
 use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
 use crate::node::Node;
-use crate::utils::{get_random, get_random_position, get_random_weight};
+use crate::utils::{get_random, get_random_position, get_random_range, get_random_weight};
 use crate::Activation;
 
 #[derive(Default, Clone, Serialize, Deserialize)]
@@ -291,8 +291,12 @@ impl Genome {
             debug!("mutate connection_enabled: {}", json!(genome));
         }
         if get_random() < config.connection_weight_prob {
-            genome = genome.mutate_connection_weight(config).unwrap_or(genome);
-            debug!("mutate connection_weight: {}", json!(genome));
+            let retry = get_random_range(1, config.connection_weight_iter);
+
+            for i in 0..retry {
+                genome = genome.mutate_connection_weight(config).unwrap_or(genome);
+                debug!("mutate connection_weight ({i}): {}", json!(genome));
+            }
         }
 
         if get_random() < config.node_enabled {

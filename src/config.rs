@@ -8,6 +8,7 @@ pub struct Config {
     pub connection_weight: f64,
     pub connection_weight_prob: f32,
     pub connection_weight_delta: f64,
+    pub connection_weight_iter: usize,
     pub node_max: usize,
     pub node_bias: f64,
     pub node_enabled: f32,
