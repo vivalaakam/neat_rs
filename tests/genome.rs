@@ -273,6 +273,7 @@ mod tests {
         assert_eq!(new_genome.get_nodes().len(), 5);
     }
 
+    #[ignore]
     #[test]
     fn mutate_node_enabled() {
         let config = Config::default();
