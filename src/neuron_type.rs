@@ -1,15 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub enum NeuronType {
     Input,
     Hidden,
     Output,
+    #[default]
     Unknown,
-}
-
-impl Default for NeuronType {
-    fn default() -> Self {
-        NeuronType::Unknown
-    }
 }

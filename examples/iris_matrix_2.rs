@@ -1,6 +1,6 @@
 use new_york_utils::{levenshtein, Matrix};
 use serde::Deserialize;
-use tracing::{event, Level, level_filters::LevelFilter};
+use tracing::{debug, event, info, level_filters::LevelFilter, Level};
 
 use vivalaakam_neat_rs::{Activation, Config, Genome, Organism};
 
@@ -12,11 +12,11 @@ fn get_fitness(organism: &mut Organism, inputs: &Matrix<f64>, outputs: &Matrix<f
         for j in 0..outputs.get_columns() {
             distance += (outputs.get(j, i).unwrap_or_default()
                 - results.get(j, i).unwrap_or_default())
-                .powi(2);
+            .powi(2);
         }
     }
 
-    event!(Level::DEBUG, "distance: {}", distance);
+    debug!("distance: {distance}");
 
     organism.set_fitness((outputs.get_rows() * outputs.get_columns()) as f64 / (1f64 + distance));
 }
@@ -68,18 +68,18 @@ fn main() {
     let mut population = vec![];
 
     let config = Config {
-        add_node: 0.15,
-        add_connection: 0.15,
-        connection_enabled: 0.1,
-        crossover: 0.3,
-        connection_weight: 1.0,
+        add_node: 0.25,
+        add_connection: 0.35,
+        connection_enabled: 0.25,
+        crossover: 0.5,
+        connection_weight: 2.0,
         connection_weight_prob: 0.8,
-        connection_weight_delta: 0.1,
-        connection_weight_iter: 5,
-        node_bias_prob: 0.15,
-        node_bias_delta: 0.1,
-        node_bias: 1.0,
-        node_activation_prob: 0.15,
+        connection_weight_delta: 0.25,
+        connection_weight_iter: 25,
+        node_bias_prob: 0.25,
+        node_bias_delta: 0.25,
+        node_bias: 2.0,
+        node_activation_prob: 0.25,
         connection_max: 10000,
         node_max: 1000,
         node_enabled: 0.5,
@@ -94,13 +94,10 @@ fn main() {
             &config,
         );
 
-        match genome.mutate_connection_weight(&config) {
-            Some(genome) => {
-                let mut organism = Organism::new(genome);
-                get_fitness(&mut organism, &inputs, &outputs);
-                population.push(organism);
-            }
-            _ => {}
+        if let Some(genome) = genome.mutate_connection_weight(&config) {
+            let mut organism = Organism::new(genome);
+            get_fitness(&mut organism, &inputs, &outputs);
+            population.push(organism);
         }
     }
 
@@ -131,9 +128,8 @@ fn main() {
                 child = population.get(min_j);
             }
 
-            match population[i].mutate(child, &config) {
-                None => {}
-                Some(organism) => new_population.push(organism),
+            if let Some(organism) = population[i].mutate(child, &config) {
+                new_population.push(organism);
             }
         }
 
@@ -151,8 +147,7 @@ fn main() {
 
         if let Some(best) = population.get_mut(0) {
             best.inc_stagnation();
-            event!(
-                Level::INFO,
+            info!(
                 "{epoch}: {:.8} {}",
                 best.get_fitness(),
                 best.get_stagnation()
@@ -174,16 +169,16 @@ fn main() {
 
                 equals = equals
                     && outputs.get(j, i).unwrap_or_default().round()
-                    == results.get(j, i).unwrap_or_default().round();
+                        == results.get(j, i).unwrap_or_default().round();
             }
 
             if equals {
                 success += 1;
             }
 
-            event!(Level::INFO, "{equals}, {res:?}");
+            info!("{equals}, {res:?}");
         }
 
-        event!(Level::INFO, "{success}/{}", outputs.get_rows());
+        info!("{success}/{}", outputs.get_rows());
     }
 }

@@ -1,5 +1,5 @@
-use log::LevelFilter;
 use new_york_utils::{levenshtein, Matrix};
+use tracing::{event, level_filters::LevelFilter, Level};
 
 use vivalaakam_neat_rs::{Activation, Config, Genome, Organism};
 
@@ -15,10 +15,10 @@ fn get_fitness(organism: &mut Organism, inputs: &Matrix<f64>) {
 }
 
 fn main() {
-    let _ = env_logger::builder()
-        .filter_level(LevelFilter::Info)
-        .is_test(true)
-        .try_init();
+    tracing_subscriber::fmt()
+        .with_max_level(LevelFilter::INFO)
+        .with_test_writer()
+        .init();
 
     let population_size = 50;
     let mut population = vec![];
@@ -106,7 +106,8 @@ fn main() {
 
         if let Some(best) = population.get_mut(0) {
             best.inc_stagnation();
-            println!(
+            event!(
+                Level::INFO,
                 "{epoch}: {:.8} {}",
                 best.get_fitness(),
                 best.get_stagnation()
@@ -115,5 +116,5 @@ fn main() {
         epoch += 1;
     }
 
-    println!("{}", best.unwrap().genome.as_json());
+    event!(Level::INFO, "{}", best.unwrap().genome.as_json());
 }

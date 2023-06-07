@@ -1,17 +1,35 @@
 use new_york_utils::{levenshtein, Matrix};
-use tracing::{event, Level, level_filters::LevelFilter};
+use serde::Deserialize;
+use tracing::{event, level_filters::LevelFilter, Level};
 
 use vivalaakam_neat_rs::{Activation, Config, Genome, Organism};
 
-fn get_fitness(organism: &mut Organism, inputs: &Matrix<f64>) {
-    let output = organism.activate_matrix(inputs);
+fn get_fitness(organism: &mut Organism, inputs: &Matrix<f64>, outputs: &Matrix<f64>) {
+    let results = organism.activate_matrix(inputs);
     let mut distance: f64 = 0f64;
-    let results = vec![0f64, 1f64, 1f64, 0f64];
-    for i in 0..inputs.get_rows() {
-        distance += (results[i] - output.get(0, i).unwrap_or_default()).powi(2);
+
+    for i in 0..outputs.get_rows() {
+        for j in 0..outputs.get_columns() {
+            distance += (outputs.get(j, i).unwrap_or_default()
+                - results.get(j, i).unwrap_or_default())
+            .powi(2);
+        }
     }
 
-    organism.set_fitness(16f64 / (1f64 + distance));
+    event!(Level::DEBUG, "distance: {}", distance);
+
+    organism.set_fitness((outputs.get_rows() * outputs.get_columns()) as f64 / (1f64 + distance));
+}
+
+#[derive(Debug, Deserialize)]
+struct Record {
+    sepal_length: f64,
+    sepal_width: f64,
+    petal_length: f64,
+    petal_width: f64,
+    variety_sentosa: f64,
+    variety_versicolor: f64,
+    variety_virginica: f64,
 }
 
 fn main() {
@@ -20,6 +38,31 @@ fn main() {
         .with_test_writer()
         .init();
 
+    let reader = csv::Reader::from_path("./examples/iris.csv");
+    let mut inputs = Matrix::new(4, 0);
+    let mut outputs = Matrix::new(3, 0);
+
+    for record in reader.unwrap().deserialize::<Record>() {
+        match record {
+            Ok(rec) => {
+                let _ = inputs.push_row(vec![
+                    rec.sepal_length,
+                    rec.sepal_width,
+                    rec.petal_length,
+                    rec.petal_width,
+                ]);
+
+                let _ = outputs.push_row(vec![
+                    rec.variety_sentosa,
+                    rec.variety_versicolor,
+                    rec.variety_virginica,
+                ]);
+
+                event!(Level::INFO, "{rec:?}");
+            }
+            Err(_) => {}
+        }
+    }
 
     let population_size = 50;
     let mut population = vec![];
@@ -42,18 +85,19 @@ fn main() {
         node_enabled: 0.5,
     };
 
-    let genome = Genome::generate_genome(2, 1, vec![], Some(Activation::Sigmoid), &config);
+    while population.len() < population_size * 4 {
+        let genome = Genome::generate_genome(
+            inputs.get_columns(),
+            outputs.get_columns(),
+            vec![],
+            Some(Activation::Sigmoid),
+            &config,
+        );
 
-    let mut inputs = Matrix::new(2, 4);
-    inputs
-        .set_data(vec![0f64, 0f64, 0f64, 1f64, 1f64, 0f64, 1f64, 1f64])
-        .expect("TODO: panic message");
-
-    while population.len() < population_size {
         match genome.mutate_connection_weight(&config) {
             Some(genome) => {
                 let mut organism = Organism::new(genome);
-                get_fitness(&mut organism, &inputs);
+                get_fitness(&mut organism, &inputs, &outputs);
                 population.push(organism);
             }
             _ => {}
@@ -94,9 +138,9 @@ fn main() {
         }
 
         for organism in new_population.iter_mut() {
-            get_fitness(organism, &inputs);
+            get_fitness(organism, &inputs, &outputs);
 
-            if organism.get_fitness() > 15.5 {
+            if organism.get_fitness() > 425f64 {
                 best = Some(organism.clone());
             }
         }
@@ -117,5 +161,29 @@ fn main() {
         epoch += 1;
     }
 
-    event!(Level::INFO, "{}", best.unwrap().genome.as_json());
+    if let Some(best) = best {
+        let results = best.activate_matrix(&inputs);
+        let mut success = 0;
+        for i in 0..outputs.get_rows() {
+            let mut res = vec![];
+            let mut equals = true;
+
+            for j in 0..outputs.get_columns() {
+                res.push(outputs.get(j, i).unwrap_or_default().round());
+                res.push(results.get(j, i).unwrap_or_default().round());
+
+                equals = equals
+                    && outputs.get(j, i).unwrap_or_default().round()
+                        == results.get(j, i).unwrap_or_default().round();
+            }
+
+            if equals {
+                success += 1;
+            }
+
+            event!(Level::INFO, "{equals}, {res:?}");
+        }
+
+        event!(Level::INFO, "{success}/{}", outputs.get_rows());
+    }
 }

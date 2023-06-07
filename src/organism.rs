@@ -60,15 +60,9 @@ impl Organism {
     }
 
     pub fn mutate(&self, child: Option<&Organism>, config: &Config) -> Option<Self> {
-        let genome = match child {
-            None => None,
-            Some(organism) => Some(&organism.genome),
-        };
+        let genome = child.map(|organism| &organism.genome);
 
-        match self.genome.mutate(genome, config) {
-            None => None,
-            Some(genome) => Some(Organism::new(genome)),
-        }
+        self.genome.mutate(genome, config).map(Organism::new)
     }
 
     pub fn as_json(&self) -> String {
@@ -102,7 +96,7 @@ impl Clone for Organism {
             genome: self.genome.clone(),
             network: self.network.clone(),
             fitness: Mutex::new(self.get_fitness()),
-            stagnation: self.stagnation.clone(),
+            stagnation: self.stagnation,
             genotype: self.genotype.clone(),
             id: self.id.clone(),
         }
