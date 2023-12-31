@@ -1,0 +1,29 @@
+[package]
+name = "examples"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+path = "src/iris_matrix.rs"
+name = "iris_matrix"
+
+[[bin]]
+path = "src/xor.rs"
+name = "xor"
+
+[[bin]]
+path = "src/xor_matrix.rs"
+name = "xor_matrix"
+
+[dependencies]
+csv = "1.2"
+lazy_static = "1.4"
+tracing-subscriber = "0.3"
+rand = { workspace = true }
+serde = { workspace = true }
+ndarray = { workspace = true }
+tracing = { workspace = true }
+vivalaakam_neuro_neat = { workspace = true }
+vivalaakam_neuro_utils = { workspace = true }

@@ -6,7 +6,7 @@ use crate::neuron_type::NeuronType;
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
     id: String,
-    bias: f64,
+    bias: f32,
     enabled: bool,
     activation: Activation,
     neuron_type: NeuronType,
@@ -17,7 +17,7 @@ impl Node {
     pub fn new<T>(
         neuron_type: NeuronType,
         id: T,
-        bias: f64,
+        bias: f32,
         activation: Option<Activation>,
         position: Option<usize>,
     ) -> Self
@@ -50,11 +50,11 @@ impl Node {
         self.neuron_type.clone()
     }
 
-    pub fn set_bias(&mut self, bias: f64) {
+    pub fn set_bias(&mut self, bias: f32) {
         self.bias = bias;
     }
 
-    pub fn get_bias(&self) -> f64 {
+    pub fn get_bias(&self) -> f32 {
         self.bias
     }
 

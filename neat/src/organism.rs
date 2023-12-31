@@ -1,16 +1,16 @@
 use std::cmp::Ordering;
 use std::sync::Mutex;
 
-use new_york_utils::Matrix;
+use ndarray::Array2;
 
-use crate::network::Network;
 use crate::{Config, Genome, NeuronType};
+use crate::network::Network;
 
 #[derive(Default)]
 pub struct Organism {
     pub genome: Genome,
     pub network: Network,
-    fitness: Mutex<f64>,
+    fitness: Mutex<f32>,
     stagnation: usize,
     genotype: Vec<String>,
     id: Option<String>,
@@ -31,27 +31,27 @@ impl Organism {
         Organism {
             genome,
             network,
-            fitness: Mutex::new(0f64),
+            fitness: Mutex::new(0.0),
             stagnation: 0,
             genotype,
             id: None,
         }
     }
 
-    pub fn activate(&self, params: Vec<f64>) -> Vec<f64> {
+    pub fn activate(&self, params: Vec<f32>) -> Vec<f32> {
         self.network.activate(params)
     }
 
-    pub fn activate_matrix(&self, params: &Matrix<f64>) -> Matrix<f64> {
+    pub fn activate_matrix(&self, params: &Array2<f32>) -> Array2<f32> {
         self.network.activate_matrix(params)
     }
 
-    pub fn set_fitness(&self, fitness: f64) {
+    pub fn set_fitness(&self, fitness: f32) {
         let mut data = self.fitness.lock().unwrap();
         *data = fitness
     }
 
-    pub fn get_fitness(&self) -> f64 {
+    pub fn get_fitness(&self) -> f32 {
         *self.fitness.lock().unwrap()
     }
 

@@ -4,14 +4,14 @@ use serde::{Deserialize, Serialize};
 pub struct Connection {
     from: String,
     to: String,
-    weight: f64,
+    weight: f32,
     enabled: bool,
 }
 
-impl Connection {
-    pub fn new<T>(from: T, to: T, weight: f64) -> Self
-    where
-        T: Into<String>,
+impl Connection  {
+    pub fn new<T1>(from: T1, to: T1, weight: f32) -> Self
+        where
+            T1: Into<String>,
     {
         Connection {
             from: from.into(),
@@ -45,11 +45,11 @@ impl Connection {
         self.to.to_string()
     }
 
-    pub fn get_weight(&self) -> f64 {
+    pub fn get_weight(&self) -> f32 {
         self.weight
     }
 
-    pub fn set_weight(&mut self, weight: f64) {
+    pub fn set_weight(&mut self, weight: f32) {
         self.weight = weight
     }
 }

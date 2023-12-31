@@ -1,10 +1,13 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
-use new_york_utils::{levenshtein, make_id};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tracing::debug;
 
+use vivalaakam_neuro_utils::{levenshtein, make_id};
+use vivalaakam_neuro_utils::random::{get_random, get_random_position, get_random_range, get_random_weight};
+
+use crate::Activation;
 use crate::config::Config;
 use crate::connection::Connection;
 use crate::link::Link;
@@ -12,8 +15,6 @@ use crate::network::Network;
 use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
 use crate::node::Node;
-use crate::utils::{get_random, get_random_position, get_random_range, get_random_weight};
-use crate::Activation;
 
 #[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Genome {
@@ -45,7 +46,7 @@ impl Genome {
             layer.push(Node::new(
                 NeuronType::Input,
                 format!("input_{i}"),
-                0f64,
+                0f32,
                 None,
                 Some(counter),
             ));
@@ -270,12 +271,16 @@ impl Genome {
     }
 
     pub fn mutate(&self, child: Option<&Genome>, config: &Config) -> Option<Self> {
-        let mut genome = self.clone();
+        let mut genome = Genome::default();
+        self.clone_into(&mut genome);
+
         debug!("mutate enter: {}", json!(genome));
 
-        if child.is_some() && get_random() < config.crossover {
-            genome = genome.mutate_crossover(child.unwrap()).unwrap_or(genome);
-            debug!("mutate crossover: {}", json!(genome));
+        if let Some(child) = child {
+            if get_random() < config.crossover {
+                genome = genome.mutate_crossover(child).unwrap_or(genome);
+                debug!("mutate crossover: {}", json!(genome));
+            }
         }
 
         if get_random() < config.add_node {
@@ -285,6 +290,7 @@ impl Genome {
 
         if get_random() < config.add_connection {
             genome = genome.mutate_add_connection(config).unwrap_or(genome);
+
             debug!("mutate add_connection: {}", json!(genome));
         }
 
@@ -324,7 +330,8 @@ impl Genome {
             return None;
         }
 
-        let mut genome = self.clone();
+        let mut genome = Genome::default();
+        self.clone_into(&mut genome);
 
         let conn = get_random_position(self.connections.len());
 
@@ -340,7 +347,7 @@ impl Genome {
             Some(activations[activation]),
             None,
         );
-        let from = Connection::new(connection.get_from(), node.get_id(), 1f64);
+        let from = Connection::new(connection.get_from(), node.get_id(), 1.0);
         genome.connections.push(from);
 
         let to = Connection::new(node.get_id(), connection.get_to(), connection.get_weight());
@@ -357,7 +364,9 @@ impl Genome {
             return None;
         }
 
-        let mut genome = self.clone();
+        let mut genome = Genome::default();
+        self.clone_into(&mut genome);
+
         let mut exists_connections = HashSet::new();
 
         for connection in &self.connections {
@@ -408,7 +417,8 @@ impl Genome {
     }
 
     pub fn mutate_node_bias(&self, config: &Config) -> Option<Self> {
-        let mut genome = self.clone();
+        let mut genome = Genome::default();
+        self.clone_into(&mut genome);
 
         let applicants = genome
             .nodes
@@ -430,7 +440,8 @@ impl Genome {
     }
 
     pub fn mutate_node_activation(&self, _config: &Config) -> Option<Self> {
-        let mut genome = self.clone();
+        let mut genome = Genome::default();
+        self.clone_into(&mut genome);
 
         let applicants = genome
             .nodes
@@ -455,7 +466,8 @@ impl Genome {
     }
 
     pub fn mutate_node_enabled(&self, _config: &Config) -> Option<Self> {
-        let mut genome = self.clone();
+        let mut genome = Genome::default();
+        self.clone_into(&mut genome);
 
         let applicants = genome
             .nodes
@@ -478,7 +490,8 @@ impl Genome {
     }
 
     pub fn mutate_connection_weight(&self, config: &Config) -> Option<Self> {
-        let mut genome = self.clone();
+        let mut genome = Genome::default();
+        self.clone_into(&mut genome);
         let mut max_retry = 10;
         let mut index = None;
         while max_retry > 0 && index.is_none() {
@@ -491,11 +504,12 @@ impl Genome {
             }
         }
 
-        if index.is_none() {
-            return None;
-        }
+        let index = match index {
+            Some(index) => index,
+            None => return None,
+        };
 
-        if let Some(connection) = genome.connections.get_mut(index.unwrap()) {
+        if let Some(connection) = genome.connections.get_mut(index) {
             connection.set_weight(
                 connection.get_weight() + get_random_weight(config.connection_weight_delta),
             );
@@ -585,10 +599,7 @@ impl Genome {
         parent_nodes.sort();
         child_nodes.sort();
 
-        match levenshtein(parent_nodes, child_nodes) {
-            Ok(val) => val,
-            Err(_) => i32::MAX,
-        }
+        levenshtein(parent_nodes, child_nodes).unwrap_or(i32::MAX)
     }
 
     pub fn as_json(&self) -> String {

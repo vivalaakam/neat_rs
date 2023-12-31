@@ -5,7 +5,7 @@ use crate::Activation;
 #[derive(Default, Clone)]
 pub struct Neuron {
     position: usize,
-    bias: f64,
+    bias: f32,
     neuron_type: NeuronType,
     connections: Vec<Link>,
     activation: Activation,
@@ -14,7 +14,7 @@ pub struct Neuron {
 impl Neuron {
     pub fn new(
         neuron_type: NeuronType,
-        bias: f64,
+        bias: f32,
         position: usize,
         activation: Activation,
         connections: Vec<Link>,
@@ -28,7 +28,7 @@ impl Neuron {
         }
     }
 
-    pub fn get_bias(&self) -> f64 {
+    pub fn get_bias(&self) -> f32 {
         self.bias
     }
 
@@ -44,7 +44,7 @@ impl Neuron {
         self.connections.to_vec()
     }
 
-    pub fn activate(&self, value: f64) -> f64 {
+    pub fn activate(&self, value: f32) -> f32 {
         self.activation.activate(value)
     }
 }

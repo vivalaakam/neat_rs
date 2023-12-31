@@ -1,17 +1,20 @@
-use new_york_utils::{levenshtein, Matrix};
-use tracing::{event, level_filters::LevelFilter, Level};
+use lazy_static::lazy_static;
+use ndarray::Array2;
+use tracing::{info, level_filters::LevelFilter};
 
-use vivalaakam_neat_rs::{Activation, Config, Genome, Organism};
+use vivalaakam_neuro_neat::{Activation, Config, Genome, Organism};
+use vivalaakam_neuro_utils::levenshtein;
 
-fn get_fitness(organism: &mut Organism, inputs: &Matrix<f64>) {
-    let output = organism.activate_matrix(inputs);
-    let mut distance: f64 = 0f64;
-    let results = vec![0f64, 1f64, 1f64, 0f64];
-    for i in 0..inputs.get_rows() {
-        distance += (results[i] - output.get(0, i).unwrap_or_default()).powi(2);
-    }
+lazy_static! {
+    static ref INPUTS: Array2<f32> =  Array2::from_shape_vec((4, 2), vec![0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32]).expect("");
+    static ref OUTPUTS: Array2<f32> =  Array2::from_shape_vec((4, 1), vec![0f32, 1f32, 1f32, 0f32]).expect("");
+}
 
-    organism.set_fitness(16f64 / (1f64 + distance));
+fn get_fitness(organism: &mut Organism) {
+    let output = organism.activate_matrix(&INPUTS);
+
+    let distance = (OUTPUTS.clone() - output).iter().map(|row| (*row).powi(2)).sum::<f32>();
+    organism.set_fitness(16f32 / (1f32 + distance));
 }
 
 fn main() {
@@ -43,19 +46,11 @@ fn main() {
 
     let genome = Genome::generate_genome(2, 1, vec![], Some(Activation::Sigmoid), &config);
 
-    let mut inputs = Matrix::new(2, 4);
-    inputs
-        .set_data(vec![0f64, 0f64, 0f64, 1f64, 1f64, 0f64, 1f64, 1f64])
-        .expect("TODO: panic message");
-
     while population.len() < population_size {
-        match genome.mutate_connection_weight(&config) {
-            Some(genome) => {
-                let mut organism = Organism::new(genome);
-                get_fitness(&mut organism, &inputs);
-                population.push(organism);
-            }
-            _ => {}
+        if let Some(genome) = genome.mutate_connection_weight(&config) {
+            let mut organism = Organism::new(genome);
+            get_fitness(&mut organism);
+            population.push(organism);
         }
     }
 
@@ -93,7 +88,7 @@ fn main() {
         }
 
         for organism in new_population.iter_mut() {
-            get_fitness(organism, &inputs);
+            get_fitness(organism);
 
             if organism.get_fitness() > 15.5 {
                 best = Some(organism.clone());
@@ -106,8 +101,7 @@ fn main() {
 
         if let Some(best) = population.get_mut(0) {
             best.inc_stagnation();
-            event!(
-                Level::INFO,
+            info!(
                 "{epoch}: {:.8} {}",
                 best.get_fitness(),
                 best.get_stagnation()
@@ -116,5 +110,5 @@ fn main() {
         epoch += 1;
     }
 
-    event!(Level::INFO, "{}", best.unwrap().genome.as_json());
+    info!("{}", best.unwrap().genome.as_json());
 }

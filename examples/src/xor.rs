@@ -1,20 +1,20 @@
-use new_york_utils::levenshtein;
-use tracing::{event, level_filters::LevelFilter, Level};
+use tracing::{event, Level, level_filters::LevelFilter};
 
-use vivalaakam_neat_rs::{Activation, Config, Genome, Organism};
+use vivalaakam_neuro_neat::{Activation, Config, Genome, Organism};
+use vivalaakam_neuro_utils::levenshtein;
 
 fn get_fitness(organism: &mut Organism) {
-    let mut distance: f64 = 0f64;
-    let output = organism.activate(vec![0f64, 0f64]);
-    distance += (0f64 - output[0]).powi(2);
-    let output = organism.activate(vec![0f64, 1f64]);
-    distance += (1f64 - output[0]).powi(2);
-    let output = organism.activate(vec![1f64, 0f64]);
-    distance += (1f64 - output[0]).powi(2);
-    let output = organism.activate(vec![1f64, 1f64]);
-    distance += (0f64 - output[0]).powi(2);
+    let mut distance = 0f32;
+    let output = organism.activate(vec![0f32, 0f32]);
+    distance += (0f32 - output[0]).powi(2);
+    let output = organism.activate(vec![0f32, 1f32]);
+    distance += (1f32 - output[0]).powi(2);
+    let output = organism.activate(vec![1f32, 0f32]);
+    distance += (1f32 - output[0]).powi(2);
+    let output = organism.activate(vec![1f32, 1f32]);
+    distance += (0f32 - output[0]).powi(2);
 
-    organism.set_fitness(16f64 / (1f64 + distance));
+    organism.set_fitness(16f32 / (1f32 + distance));
 }
 
 fn main() {
@@ -47,13 +47,10 @@ fn main() {
     let genome = Genome::generate_genome(2, 1, vec![], Some(Activation::Sigmoid), &config);
 
     while population.len() < population_size {
-        match genome.mutate_connection_weight(&config) {
-            Some(genome) => {
-                let mut organism = Organism::new(genome);
-                get_fitness(&mut organism);
-                population.push(organism);
-            }
-            _ => {}
+        if let Some(genome) = genome.mutate_connection_weight(&config) {
+            let mut organism = Organism::new(genome);
+            get_fitness(&mut organism);
+            population.push(organism);
         }
     }
 

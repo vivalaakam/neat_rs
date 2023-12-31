@@ -1,4 +1,4 @@
-use new_york_utils::Matrix;
+use ndarray::Array2;
 
 use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
@@ -32,8 +32,8 @@ impl Network {
         network
     }
 
-    pub fn activate(&self, inputs: Vec<f64>) -> Vec<f64> {
-        let mut state = vec![0f64; self.neurons.len()];
+    pub fn activate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        let mut state = vec![0f32; self.neurons.len()];
         for neuron in &self.neurons {
             match neuron.get_neuron_type() {
                 NeuronType::Input => state[neuron.get_position()] = inputs[neuron.get_position()],
@@ -53,19 +53,15 @@ impl Network {
         state[state.len() - self.outputs..].to_vec()
     }
 
-    pub fn activate_matrix(&self, matrix: &Matrix<f64>) -> Matrix<f64> {
-        let rows_length = matrix.get_rows();
-        let mut state = Matrix::new(self.neurons.len(), rows_length);
+    pub fn activate_matrix(&self, matrix: &Array2<f32>) -> Array2<f32> {
+        let rows_length = matrix.shape()[0];
+        let mut state = Array2::from_elem((rows_length, self.neurons.len()), 0f32);
 
         for neuron in &self.neurons {
             match neuron.get_neuron_type() {
                 NeuronType::Input => {
                     for i in 0..rows_length {
-                        let _res = state.set(
-                            neuron.get_position(),
-                            i,
-                            matrix.get(neuron.get_position(), i).unwrap_or_default(),
-                        );
+                        state[[i, neuron.get_position()]] = matrix[[i, neuron.get_position()]];
                     }
                 }
                 _ => {
@@ -73,21 +69,20 @@ impl Network {
                         let mut value = neuron.get_bias();
 
                         for connection in neuron.get_connections() {
-                            value += state.get(connection.get_from(), i).unwrap_or_default()
-                                * connection.get_weight();
+                            value += state[[i, connection.get_from()]] * connection.get_weight();
                         }
 
-                        let _ = state.set(neuron.get_position(), i, neuron.activate(value));
+                        state[[i, neuron.get_position()]] = neuron.activate(value);
                     }
                 }
             }
         }
 
-        let mut response = Matrix::new(self.outputs, rows_length);
+        let mut response = Array2::from_elem((rows_length, self.outputs), 0f32);
         let neurons_start = self.neurons.len() - self.outputs;
         for c in 0..self.outputs {
             for i in 0..rows_length {
-                let _ = response.set(c, i, state.get(neurons_start + c, i).unwrap_or_default());
+                response[[i, c]] = state[[i, neurons_start + c]];
             }
         }
 

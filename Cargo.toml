@@ -1,31 +1,22 @@
-[package]
-name = "vivalaakam_neat_rs"
-version = "0.1.16"
-edition = "2021"
-authors = ["Andrey Makarov <viva.la.akam@gmail.com>"]
-description = "Library for calculation some things"
-license = "MIT"
+[workspace]
+resolver = "2"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+members = [
+    "examples",
+    "neat",
+    "utils",
+]
 
-[dependencies]
+[workspace.dependencies]
 rand = "0.8"
+bytes = "1.5"
 tracing = "0.1"
+ndarray = "0.15"
+thiserror = "1.0"
 serde_json = "1.0"
 new_york_utils = "0.1"
+vivalaakam_neuro_neat = { path = "./neat" }
+vivalaakam_neuro_utils = { path = "./utils" }
+getrandom = { version = "0.2", features = ["js"] }
 serde = { version = "1.0", features = ["derive"] }
-strum = { version = "0.24", features = ["derive"] }
-getrandom = { version = "0.2.7", features = ["js"] }
-
-[dev-dependencies]
-criterion = "0.5"
-
-[[bench]]
-name = "activate"
-harness = false
-
-[dependencies.tracing-subscriber]
-version = "0.3"
-
-[dependencies.csv]
-version = "1.2"
+strum = { version = "0.25", features = ["derive"] }
