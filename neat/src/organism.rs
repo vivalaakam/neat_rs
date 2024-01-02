@@ -12,7 +12,7 @@ pub struct Organism {
     pub network: Network,
     fitness: Mutex<f32>,
     stagnation: usize,
-    genotype: Vec<String>,
+    genotype: Vec<u32>,
     id: Option<String>,
 }
 
@@ -55,7 +55,7 @@ impl Organism {
         *self.fitness.lock().unwrap()
     }
 
-    pub fn get_genotype(&self) -> Vec<String> {
+    pub fn get_genotype(&self) -> Vec<u32> {
         self.genotype.to_vec()
     }
 

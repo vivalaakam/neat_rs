@@ -1,4 +1,4 @@
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{distributions::Alphanumeric, random, Rng};
 
 /**
 Generate unique id
@@ -16,4 +16,8 @@ pub fn make_id(len: usize) -> String {
         .take(len)
         .map(char::from)
         .collect()
+}
+
+pub fn make_u8_id(len: usize) -> Vec<u8> {
+    (0..len).map(|_| { random::<u8>() }).collect()
 }

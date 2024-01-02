@@ -9,7 +9,7 @@ pub enum LevenshteinError {
 
 pub fn levenshtein<T>(vec_1: Vec<T>, vec_2: Vec<T>) -> Result<i32, LevenshteinError>
     where
-        T: Into<String> + PartialEq,
+        T: PartialEq,
 {
     if vec_1.is_empty() {
         return Ok(vec_2.len() as i32);

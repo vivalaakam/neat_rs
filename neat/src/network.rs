@@ -36,16 +36,16 @@ impl Network {
         let mut state = vec![0f32; self.neurons.len()];
         for neuron in &self.neurons {
             match neuron.get_neuron_type() {
-                NeuronType::Input => state[neuron.get_position()] = inputs[neuron.get_position()],
+                NeuronType::Input => {
+                    state[neuron.get_position() as usize] = inputs[neuron.get_position() as usize]
+                }
                 _ => {
-                    state[neuron.get_position()] = neuron.get_bias();
+                    let value = neuron.get_connections().iter().fold(
+                        neuron.get_bias(),
+                        |a, b| a + state[b.get_from() as usize] * b.get_weight(),
+                    );
 
-                    for connection in neuron.get_connections() {
-                        state[neuron.get_position()] +=
-                            state[connection.get_from()] * connection.get_weight()
-                    }
-
-                    state[neuron.get_position()] = neuron.activate(state[neuron.get_position()]);
+                    state[neuron.get_position() as usize] = neuron.activate(value);
                 }
             }
         }
@@ -61,7 +61,7 @@ impl Network {
             match neuron.get_neuron_type() {
                 NeuronType::Input => {
                     for i in 0..rows_length {
-                        state[[i, neuron.get_position()]] = matrix[[i, neuron.get_position()]];
+                        state[[i, neuron.get_position() as usize]] = matrix[[i, neuron.get_position() as usize]];
                     }
                 }
                 _ => {
@@ -69,10 +69,11 @@ impl Network {
                         let mut value = neuron.get_bias();
 
                         for connection in neuron.get_connections() {
-                            value += state[[i, connection.get_from()]] * connection.get_weight();
+                            value += state[[i, connection.get_from() as usize]]
+                                * connection.get_weight();
                         }
 
-                        state[[i, neuron.get_position()]] = neuron.activate(value);
+                        state[[i, neuron.get_position() as usize]] = neuron.activate(value);
                     }
                 }
             }

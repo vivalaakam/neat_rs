@@ -1,12 +1,12 @@
 #[derive(Clone)]
 pub struct Link {
     weight: f32,
-    from_id: usize,
-    to_id: usize,
+    from_id: u32,
+    to_id: u32,
 }
 
 impl Link {
-    pub fn new(from_id: usize, to_id: usize, weight: f32) -> Self {
+    pub fn new(from_id: u32, to_id: u32, weight: f32) -> Self {
         Link {
             from_id,
             to_id,
@@ -18,11 +18,11 @@ impl Link {
         self.weight
     }
 
-    pub fn get_from(&self) -> usize {
+    pub fn get_from(&self) -> u32 {
         self.from_id
     }
 
-    pub fn get_to(&self) -> usize {
+    pub fn get_to(&self) -> u32 {
         self.to_id
     }
 }
