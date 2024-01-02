@@ -40,10 +40,12 @@ impl Network {
                     state[neuron.get_position() as usize] = inputs[neuron.get_position() as usize]
                 }
                 _ => {
-                    let value = neuron.get_connections().iter().fold(
-                        neuron.get_bias(),
-                        |a, b| a + state[b.get_from() as usize] * b.get_weight(),
-                    );
+                    let value = neuron
+                        .get_connections()
+                        .iter()
+                        .fold(neuron.get_bias(), |a, b| {
+                            a + state[b.get_from() as usize] * b.get_weight()
+                        });
 
                     state[neuron.get_position() as usize] = neuron.activate(value);
                 }
@@ -61,7 +63,8 @@ impl Network {
             match neuron.get_neuron_type() {
                 NeuronType::Input => {
                     for i in 0..rows_length {
-                        state[[i, neuron.get_position() as usize]] = matrix[[i, neuron.get_position() as usize]];
+                        state[[i, neuron.get_position() as usize]] =
+                            matrix[[i, neuron.get_position() as usize]];
                     }
                 }
                 _ => {

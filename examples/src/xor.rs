@@ -1,7 +1,7 @@
-use tracing::{event, Level, level_filters::LevelFilter};
+use tracing::{event, level_filters::LevelFilter, Level};
 
-use vivalaakam_neuro_neat::{Activation, Config, Genome, Organism};
-use vivalaakam_neuro_utils::levenshtein;
+use vivalaakam_neuro_neat::{Config, Genome, Organism};
+use vivalaakam_neuro_utils::{levenshtein, Activation};
 
 fn get_fitness(organism: &mut Organism) {
     let mut distance = 0f32;

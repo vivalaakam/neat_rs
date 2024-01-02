@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
+use vivalaakam_neuro_utils::Activation;
 
-use crate::activation::Activation;
 use crate::neuron_type::NeuronType;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
@@ -20,8 +20,7 @@ impl Node {
         bias: f32,
         activation: Option<Activation>,
         position: Option<u32>,
-    ) -> Self
-    {
+    ) -> Self {
         Node {
             id,
             neuron_type,
@@ -90,12 +89,15 @@ impl Node {
         ]
     }
 
-    pub fn from_weights(weights: &mut dyn Iterator<Item=f32>) -> Self {
+    pub fn from_weights(weights: &mut dyn Iterator<Item = f32>) -> Self {
         let id = weights.next().expect("got not enough weights") as u32;
         let bias = weights.next().expect("got not enough weights");
         let position = weights.next().expect("got not enough weights") as u32;
 
-        let info = weights.next().expect("got not enough weights").to_le_bytes();
+        let info = weights
+            .next()
+            .expect("got not enough weights")
+            .to_le_bytes();
 
         let enabled = info[0] == 1;
         let activation = Activation::from_bytes(info[1]);

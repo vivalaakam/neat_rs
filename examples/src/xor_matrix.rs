@@ -2,18 +2,24 @@ use lazy_static::lazy_static;
 use ndarray::Array2;
 use tracing::{info, level_filters::LevelFilter};
 
-use vivalaakam_neuro_neat::{Activation, Config, Genome, Organism};
-use vivalaakam_neuro_utils::levenshtein;
+use vivalaakam_neuro_neat::{Config, Genome, Organism};
+use vivalaakam_neuro_utils::{levenshtein, Activation};
 
 lazy_static! {
-    static ref INPUTS: Array2<f32> =  Array2::from_shape_vec((4, 2), vec![0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32]).expect("");
-    static ref OUTPUTS: Array2<f32> =  Array2::from_shape_vec((4, 1), vec![0f32, 1f32, 1f32, 0f32]).expect("");
+    static ref INPUTS: Array2<f32> =
+        Array2::from_shape_vec((4, 2), vec![0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32])
+            .expect("");
+    static ref OUTPUTS: Array2<f32> =
+        Array2::from_shape_vec((4, 1), vec![0f32, 1f32, 1f32, 0f32]).expect("");
 }
 
 fn get_fitness(organism: &mut Organism) {
     let output = organism.activate_matrix(&INPUTS);
 
-    let distance = (OUTPUTS.clone() - output).iter().map(|row| (*row).powi(2)).sum::<f32>();
+    let distance = (OUTPUTS.clone() - output)
+        .iter()
+        .map(|row| (*row).powi(2))
+        .sum::<f32>();
     organism.set_fitness(16f32 / (1f32 + distance));
 }
 

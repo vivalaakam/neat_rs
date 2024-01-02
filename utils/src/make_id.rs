@@ -19,5 +19,5 @@ pub fn make_id(len: usize) -> String {
 }
 
 pub fn make_u8_id(len: usize) -> Vec<u8> {
-    (0..len).map(|_| { random::<u8>() }).collect()
+    (0..len).map(|_| random::<u8>()).collect()
 }

@@ -1,5 +1,5 @@
-use rand::{random, Rng};
 use rand::distributions::uniform::SampleUniform;
+use rand::{random, Rng};
 
 pub fn get_random_position(len: usize) -> usize {
     get_random_range(0, len)
@@ -14,8 +14,8 @@ pub fn get_random() -> f32 {
 }
 
 pub fn get_random_range<T>(from: T, to: T) -> T
-    where
-        T: SampleUniform + PartialOrd,
+where
+    T: SampleUniform + PartialOrd,
 {
     rand::thread_rng().gen_range(from..to)
 }

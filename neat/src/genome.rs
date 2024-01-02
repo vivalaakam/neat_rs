@@ -4,10 +4,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tracing::debug;
 
-use vivalaakam_neuro_utils::levenshtein;
-use vivalaakam_neuro_utils::random::{get_random, get_random_position, get_random_range, get_random_weight};
+use vivalaakam_neuro_utils::random::{
+    get_random, get_random_position, get_random_range, get_random_weight,
+};
+use vivalaakam_neuro_utils::{levenshtein, Activation};
 
-use crate::Activation;
 use crate::config::Config;
 use crate::connection::Connection;
 use crate::link::Link;
@@ -56,7 +57,6 @@ impl Genome {
 
         let mut last_layer = layer.clone();
         nodes = [nodes, layer].concat();
-
 
         for l in hidden {
             let mut layer = vec![];
@@ -452,8 +452,7 @@ impl Genome {
             .map(|node| node.get_id())
             .collect::<Vec<_>>();
 
-        let applicant = applicants
-            .get(get_random_position(applicants.len()))?;
+        let applicant = applicants.get(get_random_position(applicants.len()))?;
 
         let index = genome.get_node_position_by_id(*applicant)?;
 
@@ -477,8 +476,7 @@ impl Genome {
             .map(|node| node.get_id())
             .collect::<Vec<_>>();
 
-        let applicant = applicants
-            .get(get_random_position(applicants.len()))?;
+        let applicant = applicants.get(get_random_position(applicants.len()))?;
 
         let index = genome.get_node_position_by_id(*applicant)?;
 
@@ -635,7 +633,7 @@ impl Genome {
             inputs,
             outputs,
             self.nodes.len(),
-            self.connections.len()
+            self.connections.len(),
         ]
     }
 
@@ -644,11 +642,15 @@ impl Genome {
             .iter()
             .map(|&size| size as f32)
             .chain(self.nodes.iter().flat_map(|node| node.to_weights()))
-            .chain(self.connections.iter().flat_map(|connection| connection.to_weights()))
+            .chain(
+                self.connections
+                    .iter()
+                    .flat_map(|connection| connection.to_weights()),
+            )
             .collect()
     }
 
-    pub fn from_weights(weights: impl IntoIterator<Item=f32>) -> Self {
+    pub fn from_weights(weights: impl IntoIterator<Item = f32>) -> Self {
         let mut weights = weights.into_iter();
 
         let network_type = weights.next().expect("got no network type") as usize;
@@ -672,10 +674,7 @@ impl Genome {
             panic!("got too many weights");
         }
 
-        Genome {
-            nodes,
-            connections,
-        }
+        Genome { nodes, connections }
     }
 }
 

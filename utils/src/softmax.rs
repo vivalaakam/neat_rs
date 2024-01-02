@@ -1,4 +1,4 @@
-pub fn softmax(arr: Vec<f32>) -> Vec<f32>  {
+pub fn softmax(arr: Vec<f32>) -> Vec<f32> {
     let c = &arr.iter().fold(0f32, |a, b| a.max(*b));
 
     let d = arr

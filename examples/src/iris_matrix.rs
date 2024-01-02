@@ -4,12 +4,15 @@ use rand::thread_rng;
 use serde::Deserialize;
 use tracing::{debug, info, level_filters::LevelFilter, warn};
 
-use vivalaakam_neuro_neat::{Activation, Config, Genome, Organism};
-use vivalaakam_neuro_utils::levenshtein;
+use vivalaakam_neuro_neat::{Config, Genome, Organism};
+use vivalaakam_neuro_utils::{levenshtein, Activation};
 
 fn get_fitness(organism: &mut Organism, inputs: &Array2<f32>, outputs: &Array2<f32>) {
     let results = organism.activate_matrix(inputs);
-    let distance = (outputs - results).iter().map(|row| (*row).powi(2)).sum::<f32>();
+    let distance = (outputs - results)
+        .iter()
+        .map(|row| (*row).powi(2))
+        .sum::<f32>();
 
     debug!("distance: {distance}");
 
@@ -41,18 +44,26 @@ fn main() {
     let mut total = 0;
 
     for record in reader.unwrap().deserialize::<Record>().flatten() {
-        inputs = [inputs, vec![
-            record.sepal_length,
-            record.sepal_width,
-            record.petal_length,
-            record.petal_width,
-        ]].concat();
+        inputs = [
+            inputs,
+            vec![
+                record.sepal_length,
+                record.sepal_width,
+                record.petal_length,
+                record.petal_width,
+            ],
+        ]
+        .concat();
 
-        outputs = [outputs, vec![
-            record.variety_sentosa,
-            record.variety_versicolor,
-            record.variety_virginica,
-        ]].concat();
+        outputs = [
+            outputs,
+            vec![
+                record.variety_sentosa,
+                record.variety_versicolor,
+                record.variety_virginica,
+            ],
+        ]
+        .concat();
 
         total += 1;
     }
@@ -61,7 +72,6 @@ fn main() {
 
     let inputs = Array2::from_shape_vec((total, inputs_n), inputs).expect("");
     let outputs = Array2::from_shape_vec((total, outputs_n), outputs).expect("");
-
 
     let population_size = 50;
     let mut population = vec![];

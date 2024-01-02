@@ -55,15 +55,10 @@ impl Connection {
 
         let info = f32::from_le_bytes([enabled, 0, 0, 0]);
 
-        vec![
-            self.from as f32,
-            self.to as f32,
-            self.weight,
-            info,
-        ]
+        vec![self.from as f32, self.to as f32, self.weight, info]
     }
 
-    pub fn from_weights(weights: &mut dyn Iterator<Item=f32>) -> Self {
+    pub fn from_weights(weights: &mut dyn Iterator<Item = f32>) -> Self {
         let from = weights.next().expect("got not enough weights") as u32;
         let to = weights.next().expect("got not enough weights") as u32;
         let weight = weights.next().expect("got not enough weights");

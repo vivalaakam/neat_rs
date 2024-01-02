@@ -8,8 +8,8 @@ pub enum LevenshteinError {
 }
 
 pub fn levenshtein<T>(vec_1: Vec<T>, vec_2: Vec<T>) -> Result<i32, LevenshteinError>
-    where
-        T: PartialEq,
+where
+    T: PartialEq,
 {
     if vec_1.is_empty() {
         return Ok(vec_2.len() as i32);
@@ -39,9 +39,9 @@ pub fn levenshtein<T>(vec_1: Vec<T>, vec_2: Vec<T>) -> Result<i32, LevenshteinEr
                 matrix[[i, j - 1]] + 1,
                 matrix[[i - 1, j]] + 1,
             ]
-                .iter()
-                .min()
-                .ok_or(LevenshteinError::MinNotFound)?;
+            .iter()
+            .min()
+            .ok_or(LevenshteinError::MinNotFound)?;
 
             matrix[[i, j]] = val;
         }

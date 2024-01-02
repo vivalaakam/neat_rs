@@ -3,8 +3,8 @@ use std::sync::Mutex;
 
 use ndarray::Array2;
 
-use crate::{Config, Genome, NeuronType};
 use crate::network::Network;
+use crate::{Config, Genome, NeuronType};
 
 #[derive(Default)]
 pub struct Organism {
