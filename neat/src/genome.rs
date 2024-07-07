@@ -144,8 +144,9 @@ impl Genome {
         for connection in &self.connections {
             if connection.get_enabled() {
                 debug!("sort_nodes connection.get_to(): {:?}", connection.get_to());
-                let nodes = conns.get_mut(&connection.get_to()).unwrap();
-                nodes.push(connection);
+                if let Some(nodes) = conns.get_mut(&connection.get_to()) {
+                    nodes.push(connection);
+                }
             }
         }
 
