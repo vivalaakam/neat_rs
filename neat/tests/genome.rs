@@ -2,6 +2,7 @@
 mod tests {
     use ndarray::Array2;
     use serde_json::json;
+
     use vivalaakam_neuro_neat::{Config, Connection, Genome, NeuronType, Node};
     use vivalaakam_neuro_utils::Activation;
 
@@ -54,6 +55,7 @@ mod tests {
         let config = Config {
             node_bias: 1.0,
             connection_weight: 1.0,
+            node_max: 100,
             ..Config::default()
         };
 
@@ -150,10 +152,7 @@ mod tests {
             Array2::from_shape_vec((4, 1), vec![0.9996177, 0.9998430, 0.99639386, 0.977193])
                 .expect("output error");
 
-        assert_eq!(
-            format!("{:?}", network.activate_matrix(&inputs)),
-            format!("{:?}", outputs)
-        );
+        assert_eq!(network.activate_matrix(&inputs), outputs);
     }
 
     #[test]
