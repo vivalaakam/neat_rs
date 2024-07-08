@@ -111,5 +111,7 @@ fn main() {
         epoch += 1;
     }
 
-    event!(Level::INFO, "{}", best.unwrap().genome.as_json());
+    if let Some(best) = best {
+        event!(Level::INFO, "{}", best.genome.as_json());
+    }
 }

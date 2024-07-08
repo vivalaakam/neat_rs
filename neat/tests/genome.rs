@@ -3,7 +3,7 @@ mod tests {
     use ndarray::Array2;
     use new_york_utils::Matrix;
     use serde_json::json;
-
+    use tracing::info;
     use vivalaakam_neuro_neat::{Config, Connection, Genome, NeuronType, Node};
     use vivalaakam_neuro_utils::Activation;
 
@@ -351,5 +351,54 @@ mod tests {
         let child_genome = Genome::new(nodes, connections);
 
         assert_eq!(genome.get_distance(&child_genome), 1);
+    }
+
+    #[test]
+    fn test_serialize_to_weights() {
+        let nodes = vec![
+            Node::new(NeuronType::Input, 0, 0.0, None, Some(1)),
+            Node::new(
+                NeuronType::Hidden,
+                2,
+                0.5,
+                Some(Activation::Sigmoid),
+                Some(2),
+            ),
+            Node::new(
+                NeuronType::Hidden,
+                3,
+                0.4,
+                Some(Activation::Sigmoid),
+                Some(3),
+            ),
+            Node::new(
+                NeuronType::Output,
+                1,
+                0.3,
+                Some(Activation::Sigmoid),
+                Some(4),
+            ),
+        ];
+        let connections = vec![
+            Connection::new(0, 1, 0.9),
+            Connection::new(0, 2, 0.7),
+            Connection::new(0, 3, 0.5),
+            Connection::new(2, 1, 0.3),
+            Connection::new(3, 1, 0.1),
+        ];
+
+        let genome = Genome::new(nodes, connections);
+
+        let weights = genome.to_weights();
+        assert_eq!(weights.len(), 42);
+
+        let restored_genome = Genome::from_weights(weights);
+
+        let network = restored_genome.get_network();
+
+        assert_eq!(network.activate(vec![1.0]), vec![0.9996177]);
+        assert_eq!(network.activate(vec![1.2]), vec![0.9998430]);
+        assert_eq!(network.activate(vec![0.5]), vec![0.99639386]);
+        assert_eq!(network.activate(vec![0.1]), vec![0.977193]);
     }
 }

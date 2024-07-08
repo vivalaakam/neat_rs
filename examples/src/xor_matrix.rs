@@ -3,7 +3,8 @@ use ndarray::Array2;
 use tracing::{info, level_filters::LevelFilter};
 
 use vivalaakam_neuro_neat::{Config, Genome, Organism};
-use vivalaakam_neuro_utils::{levenshtein, Activation};
+use vivalaakam_neuro_utils::random::get_random_range;
+use vivalaakam_neuro_utils::Activation;
 
 lazy_static! {
     static ref INPUTS: Array2<f32> =
@@ -68,28 +69,11 @@ fn main() {
         let mut new_population = vec![];
 
         for i in 0..population.len() {
-            let mut child = None;
+            let min_j =
+                (population.len() + get_random_range(0, population.len() - 1)) % population.len();
 
-            let mut min_score = i32::MAX;
-            let mut min_j = i;
-
-            for j in i + 1..population.len() {
-                let score = levenshtein(population[i].get_genotype(), population[j].get_genotype())
-                    .unwrap_or(i32::MAX);
-
-                if score > 0 && score < min_score {
-                    min_score = score;
-                    min_j = j;
-                }
-            }
-
-            if min_j != i {
-                child = population.get(min_j);
-            }
-
-            match population[i].mutate(child, &config) {
-                None => {}
-                Some(organism) => new_population.push(organism),
+            if let Some(organism) = population[i].mutate(population.get(min_j), &config) {
+                new_population.push(organism);
             }
         }
 
@@ -116,5 +100,29 @@ fn main() {
         epoch += 1;
     }
 
-    info!("{}", best.unwrap().genome.as_json());
+    if let Some(best) = best {
+        info!("{}", best.genome.as_json());
+
+        let data = best.genome.to_weights();
+
+        let organism = Organism::new(Genome::from_weights(data));
+
+        let fitness = organism.activate_matrix(&INPUTS);
+
+        let shape = fitness.shape();
+
+        for i in 0..shape[0] {
+            let mut res = vec![];
+            let mut equals = true;
+
+            for j in 0..shape[1] {
+                res.push(OUTPUTS[[i, j]].round());
+                res.push(fitness[[i, j]].round());
+
+                equals = equals && OUTPUTS[[i, j]].round() == fitness[[i, j]].round();
+            }
+
+            info!("{equals}, {res:?}");
+        }
+    }
 }
