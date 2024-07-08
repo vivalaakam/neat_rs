@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
     use ndarray::Array2;
-    use new_york_utils::Matrix;
     use serde_json::json;
     use vivalaakam_neuro_neat::{Config, Connection, Genome, NeuronType, Node};
     use vivalaakam_neuro_utils::Activation;
@@ -145,10 +144,7 @@ mod tests {
         let genome = Genome::new(nodes, connections);
 
         let network = genome.get_network();
-
-        let mut inputs = Matrix::new(1, 4);
-        let _ = inputs.set_data(vec![1.0, 1.2, 0.5, 0.1]);
-
+        
         let inputs = Array2::from_shape_vec((4, 1), vec![1.0, 1.2, 0.5, 0.1]).expect("input error");
         let outputs =
             Array2::from_shape_vec((4, 1), vec![0.9996177, 0.9998430, 0.99639386, 0.977193])
