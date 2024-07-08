@@ -3,7 +3,6 @@ mod tests {
     use ndarray::Array2;
     use new_york_utils::Matrix;
     use serde_json::json;
-    use tracing::info;
     use vivalaakam_neuro_neat::{Config, Connection, Genome, NeuronType, Node};
     use vivalaakam_neuro_utils::Activation;
 
@@ -29,13 +28,13 @@ mod tests {
         assert_eq!(genome.get_connections().len(), 5);
         assert_eq!(
             json!(genome).to_string(),
-            r#"{"connections":[{"enabled":true,"from":0,"to":1,"weight":0.0},{"enabled":true,"from":0,"to":2,"weight":0.0},{"enabled":true,"from":0,"to":3,"weight":0.0},{"enabled":true,"from":2,"to":1,"weight":0.0},{"enabled":true,"from":3,"to":1,"weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":0,"neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":2,"neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":3,"neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":1,"neuron_type":"Output","position":3}]}"#
+            r#"{"connections":[{"enabled":true,"from":0,"to":1,"weight":0.0},{"enabled":true,"from":0,"to":2,"weight":0.0},{"enabled":true,"from":0,"to":3,"weight":0.0},{"enabled":true,"from":2,"to":1,"weight":0.0},{"enabled":true,"from":3,"to":1,"weight":0.0}],"inputs":1,"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":0,"neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":2,"neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":3,"neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":1,"neuron_type":"Output","position":3}],"outputs":1}"#
         );
     }
 
     #[test]
     fn from_string() {
-        let string = r#"{"connections":[{"enabled":true,"from":0,"to":1,"weight":0.0},{"enabled":true,"from":0,"to":2,"weight":0.0},{"enabled":true,"from":0,"to":3,"weight":0.0},{"enabled":true,"from":2,"to":1,"weight":0.0},{"enabled":true,"from":3,"to":1,"weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":0,"neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":2,"neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":3,"neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":1,"neuron_type":"Output","position":3}]}"#;
+        let string = r#"{"connections":[{"enabled":true,"from":0,"to":1,"weight":0.0},{"enabled":true,"from":0,"to":2,"weight":0.0},{"enabled":true,"from":0,"to":3,"weight":0.0},{"enabled":true,"from":2,"to":1,"weight":0.0},{"enabled":true,"from":3,"to":1,"weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":0,"neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":2,"neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":3,"neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":1,"neuron_type":"Output","position":3}],"inputs":1,"outputs":1}"#;
         let genome: Genome = string.to_string().into();
 
         assert_eq!(genome.get_nodes().len(), 4);
@@ -44,7 +43,7 @@ mod tests {
 
     #[test]
     fn from_str() {
-        let string = r#"{"connections":[{"enabled":true,"from":0,"to":1,"weight":0.0},{"enabled":true,"from":0,"to":2,"weight":0.0},{"enabled":true,"from":0,"to":3,"weight":0.0},{"enabled":true,"from":2,"to":1,"weight":0.0},{"enabled":true,"from":3,"to":1,"weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":0,"neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":2,"neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":3,"neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":1,"neuron_type":"Output","position":3}]}"#;
+        let string = r#"{"connections":[{"enabled":true,"from":0,"to":1,"weight":0.0},{"enabled":true,"from":0,"to":2,"weight":0.0},{"enabled":true,"from":0,"to":3,"weight":0.0},{"enabled":true,"from":2,"to":1,"weight":0.0},{"enabled":true,"from":3,"to":1,"weight":0.0}],"nodes":[{"activation":"Identity","bias":0.0,"enabled":true,"id":0,"neuron_type":"Input","position":0},{"activation":"Identity","bias":0.0,"enabled":true,"id":2,"neuron_type":"Hidden","position":1},{"activation":"Identity","bias":0.0,"enabled":true,"id":3,"neuron_type":"Hidden","position":2},{"activation":"Identity","bias":0.0,"enabled":true,"id":1,"neuron_type":"Output","position":3}],"inputs":1,"outputs":1}"#;
         let genome: Genome = string.into();
 
         assert_eq!(genome.get_nodes().len(), 4);

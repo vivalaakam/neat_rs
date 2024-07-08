@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tracing::debug;
 
-use vivalaakam_neuro_utils::{Activation, levenshtein};
 use vivalaakam_neuro_utils::random::{
     get_random, get_random_position, get_random_range, get_random_weight,
 };
+use vivalaakam_neuro_utils::{levenshtein, Activation};
 
 use crate::config::Config;
 use crate::connection::Connection;
@@ -661,7 +661,7 @@ impl Genome {
             .collect()
     }
 
-    pub fn from_weights(weights: impl IntoIterator<Item=f32>) -> Self {
+    pub fn from_weights(weights: impl IntoIterator<Item = f32>) -> Self {
         let mut weights = weights.into_iter();
 
         let network_type = weights.next().expect("got no network type") as usize;
