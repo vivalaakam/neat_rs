@@ -1,5 +1,6 @@
 use crate::link::Link;
 use crate::neuron_type::NeuronType;
+use crate::Node;
 use vivalaakam_neuro_utils::Activation;
 
 #[derive(Default, Clone)]
@@ -11,7 +12,26 @@ pub struct Neuron {
     activation: Activation,
 }
 
+impl From<Node> for Neuron {
+    fn from(value: Node) -> Self {
+        Neuron {
+            position: value.get_position(),
+            bias: value.get_bias(),
+            neuron_type: value.get_type(),
+            connections: vec![],
+            activation: value.get_activation(),
+        }
+    }
+}
+
 impl Neuron {
+    pub fn with_connections(self, connections: Vec<Link>) -> Self {
+        Neuron {
+            connections,
+            ..self
+        }
+    }
+
     pub fn new(
         neuron_type: NeuronType,
         bias: f32,

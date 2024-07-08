@@ -5,7 +5,8 @@ use serde::Deserialize;
 use tracing::{debug, info, level_filters::LevelFilter, warn};
 
 use vivalaakam_neuro_neat::{Config, Genome, Organism};
-use vivalaakam_neuro_utils::{levenshtein, Activation};
+use vivalaakam_neuro_utils::random::get_random_range;
+use vivalaakam_neuro_utils::Activation;
 
 fn get_fitness(organism: &mut Organism, inputs: &Array2<f32>, outputs: &Array2<f32>) {
     let results = organism.activate_matrix(inputs);
@@ -77,10 +78,10 @@ fn main() {
     let mut population = vec![];
 
     let config = Config {
-        add_node: 0.35,
-        add_connection: 0.45,
-        connection_enabled: 0.35,
-        crossover: 0.6,
+        add_node: 0.10,
+        add_connection: 0.25,
+        connection_enabled: 0.25,
+        crossover: 0.15,
         connection_weight: 2.0,
         connection_weight_prob: 0.8,
         connection_weight_delta: 0.35,
@@ -88,10 +89,10 @@ fn main() {
         node_bias_prob: 0.35,
         node_bias_delta: 0.35,
         node_bias: 2.0,
-        node_activation_prob: 0.35,
+        node_activation_prob: 0.15,
         connection_max: 10000,
         node_max: 1000,
-        node_enabled: 0.6,
+        node_enabled: 0.15,
     };
 
     while population.len() < population_size * 4 {
@@ -121,26 +122,10 @@ fn main() {
         let mut new_population = vec![];
 
         for i in 0..population.len() {
-            let mut child = None;
+            let min_j =
+                (population.len() + get_random_range(0, population.len() - 1)) % population.len();
 
-            let mut min_score = i32::max_value();
-            let mut min_j = i;
-
-            for j in i + 1..population.len() {
-                let score = levenshtein(population[i].get_genotype(), population[j].get_genotype())
-                    .unwrap_or(i32::max_value());
-
-                if score > 0 && score < min_score {
-                    min_score = score;
-                    min_j = j;
-                }
-            }
-
-            if min_j != i {
-                child = population.get(min_j);
-            }
-
-            if let Some(organism) = population[i].mutate(child, &config) {
+            if let Some(organism) = population[i].mutate(population.get(min_j), &config) {
                 new_population.push(organism);
             }
         }

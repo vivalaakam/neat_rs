@@ -7,11 +7,19 @@ use vivalaakam_neuro_utils::random::get_random_range;
 use vivalaakam_neuro_utils::Activation;
 
 lazy_static! {
-    static ref INPUTS: Array2<f32> =
-        Array2::from_shape_vec((4, 2), vec![0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32])
-            .expect("");
-    static ref OUTPUTS: Array2<f32> =
-        Array2::from_shape_vec((4, 1), vec![0f32, 1f32, 1f32, 0f32]).expect("");
+    static ref INPUTS: Array2<f32> = Array2::from_shape_vec(
+        (8, 3),
+        vec![
+            0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+            0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        ]
+    )
+    .expect("");
+    static ref OUTPUTS: Array2<f32> = Array2::from_shape_vec(
+        (8, 1),
+        vec![0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32,]
+    )
+    .expect("");
 }
 
 fn get_fitness(organism: &mut Organism) {
@@ -21,7 +29,7 @@ fn get_fitness(organism: &mut Organism) {
         .iter()
         .map(|row| (*row).powi(2))
         .sum::<f32>();
-    organism.set_fitness(16f32 / (1f32 + distance));
+    organism.set_fitness(64f32 / (1f32 + distance));
 }
 
 fn main() {
@@ -51,7 +59,7 @@ fn main() {
         node_enabled: 0.15,
     };
 
-    let genome = Genome::generate_genome(2, 1, vec![], Some(Activation::Sigmoid), &config);
+    let genome = Genome::generate_genome(3, 1, vec![], Some(Activation::Sigmoid), &config);
 
     while population.len() < population_size {
         if let Some(genome) = genome.mutate_connection_weight(&config) {
@@ -80,7 +88,7 @@ fn main() {
         for organism in new_population.iter_mut() {
             get_fitness(organism);
 
-            if organism.get_fitness() > 15.5 {
+            if organism.get_fitness() > 64f32 * 0.995 {
                 best = Some(organism.clone());
             }
         }

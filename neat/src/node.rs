@@ -1,7 +1,6 @@
+use crate::neuron_type::NeuronType;
 use serde::{Deserialize, Serialize};
 use vivalaakam_neuro_utils::Activation;
-
-use crate::neuron_type::NeuronType;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct Node {

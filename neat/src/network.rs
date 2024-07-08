@@ -1,4 +1,7 @@
-use ndarray::Array2;
+use std::ops::{Add, Mul};
+
+use ndarray::{concatenate, s, Array1, Array2, Axis};
+use tracing::debug;
 
 use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
@@ -12,24 +15,20 @@ pub struct Network {
 
 impl Network {
     pub fn new(neurons: Vec<Neuron>) -> Self {
-        let mut network = Network {
+        let (inputs, outputs) =
+            neurons
+                .iter()
+                .fold((0, 0), |(i, o), n| match n.get_neuron_type() {
+                    NeuronType::Input => (i + 1, o),
+                    NeuronType::Output => (i, o + 1),
+                    _ => (i, o),
+                });
+
+        Network {
             neurons,
-            ..Network::default()
-        };
-
-        for neuron in &network.neurons {
-            match neuron.get_neuron_type() {
-                NeuronType::Input => {
-                    network.inputs += 1;
-                }
-                NeuronType::Output => {
-                    network.outputs += 1;
-                }
-                _ => {}
-            }
+            inputs,
+            outputs,
         }
-
-        network
     }
 
     pub fn activate(&self, inputs: Vec<f32>) -> Vec<f32> {
@@ -57,39 +56,39 @@ impl Network {
 
     pub fn activate_matrix(&self, matrix: &Array2<f32>) -> Array2<f32> {
         let rows_length = matrix.shape()[0];
-        let mut state = Array2::from_elem((rows_length, self.neurons.len()), 0f32);
+        let mut state = concatenate(
+            Axis(1),
+            &[
+                matrix.view(),
+                Array2::zeros((rows_length, self.neurons.len() - self.inputs)).view(),
+            ],
+        )
+        .expect("");
+
+        debug!("view: {:?}", state.view());
 
         for neuron in &self.neurons {
             match neuron.get_neuron_type() {
-                NeuronType::Input => {
-                    for i in 0..rows_length {
-                        state[[i, neuron.get_position() as usize]] =
-                            matrix[[i, neuron.get_position() as usize]];
-                    }
-                }
+                NeuronType::Input => {}
                 _ => {
-                    for i in 0..rows_length {
-                        let mut value = neuron.get_bias();
+                    let value = neuron.get_connections().iter().fold(
+                        Array1::from_elem(rows_length, neuron.get_bias()),
+                        |a, b| {
+                            a.add(
+                                &state
+                                    .column(b.get_from() as usize)
+                                    .mul(Array1::from_elem(rows_length, b.get_weight())),
+                            )
+                        },
+                    );
 
-                        for connection in neuron.get_connections() {
-                            value += state[[i, connection.get_from() as usize]]
-                                * connection.get_weight();
-                        }
-
-                        state[[i, neuron.get_position() as usize]] = neuron.activate(value);
-                    }
+                    state
+                        .column_mut(neuron.get_position() as usize)
+                        .assign(&value.map(|x| neuron.activate(*x)));
                 }
             }
         }
 
-        let mut response = Array2::from_elem((rows_length, self.outputs), 0f32);
-        let neurons_start = self.neurons.len() - self.outputs;
-        for c in 0..self.outputs {
-            for i in 0..rows_length {
-                response[[i, c]] = state[[i, neurons_start + c]];
-            }
-        }
-
-        response
+        state.slice(s![.., -(self.outputs as i32)..]).to_owned()
     }
 }

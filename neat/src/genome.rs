@@ -57,10 +57,10 @@ impl Genome {
         let mut layer = vec![];
         let mut counter = 1;
 
-        for _ in 0..inputs {
+        for i in 0..inputs {
             layer.push(Node::new(
                 NeuronType::Input,
-                counter,
+                i as u32,
                 0f32,
                 None,
                 Some(counter),
@@ -103,7 +103,7 @@ impl Genome {
         for i in 0..outputs {
             let node = Node::new(
                 NeuronType::Output,
-                u32::MAX - (outputs - i) as u32,
+                (config.node_max - outputs + i) as u32,
                 get_random_weight(config.node_bias),
                 activation,
                 Some(counter),
@@ -149,9 +149,9 @@ impl Genome {
         let mut conns: HashMap<u32, Vec<&Connection>> = HashMap::new();
         let mut positions: HashMap<u32, usize> = HashMap::new();
 
-        for node in self.nodes.iter().enumerate() {
-            conns.insert(node.1.get_id(), vec![]);
-            positions.insert(node.1.get_id(), node.0);
+        for (pos, id) in self.get_all_node_ids().iter().enumerate() {
+            conns.insert(*id, vec![]);
+            positions.insert(*id, pos);
         }
 
         debug!(
@@ -293,13 +293,7 @@ impl Genome {
                 })
                 .collect::<Vec<_>>();
 
-            neurons.push(Neuron::new(
-                node.get_type(),
-                node.get_bias(),
-                node.get_position(),
-                node.get_activation(),
-                connections,
-            ));
+            neurons.push(Neuron::from(node.clone()).with_connections(connections));
         }
 
         Network::new(neurons)
@@ -396,9 +390,29 @@ impl Genome {
         let activations = Activation::to_vec();
         let activation = get_random_position(activations.len());
 
+        let exists_connections = self
+            .nodes
+            .iter()
+            .map(|node| node.get_id())
+            .collect::<HashSet<_>>();
+
+        let mut max_retry = 10;
+
+        let mut node_id = None;
+
+        while max_retry > 0 && node_id.is_none() {
+            let node = get_random_range(self.inputs, config.node_max as u32 - self.outputs);
+            if !exists_connections.contains(&node) {
+                node_id = Some(node);
+            }
+            max_retry -= 1;
+        }
+
+        let node_id = node_id?;
+
         let node = Node::new(
             NeuronType::Hidden,
-            get_random_range(self.inputs, u32::MAX - self.outputs),
+            node_id,
             get_random_weight(config.node_bias),
             Some(activations[activation]),
             None,
@@ -594,11 +608,11 @@ impl Genome {
             }
         }
 
-        let mut exists_connections = HashSet::new();
-
-        for connection in &self.get_connections() {
-            exists_connections.insert(connection.get_id());
-        }
+        let exists_connections: HashSet<String> = HashSet::from_iter(
+            self.get_connections()
+                .iter()
+                .map(|connection| connection.get_id()),
+        );
 
         for connection in &child.get_connections() {
             if !exists_connections.contains(&connection.get_id()) {
@@ -694,6 +708,10 @@ impl Genome {
             inputs,
             outputs,
         }
+    }
+
+    pub fn get_all_node_ids(&self) -> Vec<u32> {
+        self.nodes.iter().map(|node| node.get_id()).collect()
     }
 
     pub fn get_hidden_node_ids(&self) -> Vec<u32> {

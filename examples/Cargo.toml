@@ -1,6 +1,6 @@
 [package]
 name = "examples"
-version = "0.1.0"
+version = "0.1.17"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -16,6 +16,10 @@ name = "xor"
 [[bin]]
 path = "src/xor_matrix.rs"
 name = "xor_matrix"
+
+[[bin]]
+path = "src/xor_3_matrix.rs"
+name = "xor_3_matrix"
 
 [dependencies]
 csv = "1.2"
