@@ -2,6 +2,9 @@
 name = "vivalaakam_neuro_utils"
 version = "0.1.16"
 edition = "2021"
+authors = ["Andrey Makarov <viva.la.akam@gmail.com>"]
+description = "Library for calculation some things"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

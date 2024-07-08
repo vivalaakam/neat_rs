@@ -144,7 +144,7 @@ mod tests {
         let genome = Genome::new(nodes, connections);
 
         let network = genome.get_network();
-        
+
         let inputs = Array2::from_shape_vec((4, 1), vec![1.0, 1.2, 0.5, 0.1]).expect("input error");
         let outputs =
             Array2::from_shape_vec((4, 1), vec![0.9996177, 0.9998430, 0.99639386, 0.977193])
