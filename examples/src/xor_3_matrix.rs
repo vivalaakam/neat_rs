@@ -32,7 +32,7 @@ fn get_fitness(organism: &mut Organism) {
     organism.set_fitness(64f32 / (1f32 + distance));
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(LevelFilter::INFO)
         .with_test_writer()
@@ -59,10 +59,10 @@ fn main() {
         node_enabled: 0.15,
     };
 
-    let genome = Genome::generate_genome(3, 1, vec![], Some(Activation::Sigmoid), &config);
+    let genome = Genome::generate_genome(3, 1, vec![], Some(Activation::Sigmoid), &config)?;
 
     while population.len() < population_size {
-        if let Some(genome) = genome.mutate_connection_weight(&config) {
+        if let Ok(genome) = genome.mutate_connection_weight(&config) {
             let mut organism = Organism::new(genome);
             get_fitness(&mut organism);
             population.push(organism);
@@ -80,7 +80,7 @@ fn main() {
             let min_j =
                 (population.len() + get_random_range(0, population.len() - 1)) % population.len();
 
-            if let Some(organism) = population[i].mutate(population.get(min_j), &config) {
+            if let Ok(organism) = population[i].mutate(population.get(min_j), &config) {
                 new_population.push(organism);
             }
         }
@@ -133,4 +133,6 @@ fn main() {
             info!("{equals}, {res:?}");
         }
     }
+
+    Ok(())
 }

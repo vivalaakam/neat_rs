@@ -2,7 +2,9 @@ use std::cmp::Ordering;
 use std::sync::Mutex;
 
 use ndarray::Array2;
+use thiserror::Error;
 
+use crate::genome::GenomeError;
 use crate::network::Network;
 use crate::{Config, Genome, NeuronType};
 
@@ -14,6 +16,12 @@ pub struct Organism {
     stagnation: usize,
     genotype: Vec<u32>,
     id: Option<String>,
+}
+
+#[derive(Error, Debug)]
+pub enum OrganismError {
+    #[error("Invalid genome: {0}")]
+    InvalidGenome(GenomeError),
 }
 
 impl Organism {
@@ -59,10 +67,13 @@ impl Organism {
         self.genotype.to_vec()
     }
 
-    pub fn mutate(&self, child: Option<&Organism>, config: &Config) -> Option<Self> {
+    pub fn mutate(&self, child: Option<&Organism>, config: &Config) -> Result<Self, OrganismError> {
         let genome = child.map(|organism| &organism.genome);
 
-        self.genome.mutate(genome, config).map(Organism::new)
+        self.genome
+            .mutate(genome, config)
+            .map(Organism::new)
+            .map_err(OrganismError::InvalidGenome)
     }
 
     pub fn as_json(&self) -> String {

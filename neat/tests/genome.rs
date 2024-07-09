@@ -22,7 +22,7 @@ mod tests {
             Connection::new(3, 1, 0f32),
         ];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
 
         assert_eq!(genome.get_nodes().len(), 4);
         assert_eq!(genome.get_connections().len(), 5);
@@ -59,7 +59,8 @@ mod tests {
             ..Config::default()
         };
 
-        let genome = Genome::generate_genome(1, 1, vec![2], None, &config);
+        let genome =
+            Genome::generate_genome(1, 1, vec![2], None, &config).expect("can't generate genome");
 
         assert_eq!(genome.get_nodes().len(), 4);
         assert_eq!(genome.get_connections().len(), 4);
@@ -99,7 +100,7 @@ mod tests {
             Connection::new(3, 1, 0.1),
         ];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
 
         let network = genome.get_network();
 
@@ -143,7 +144,7 @@ mod tests {
             Connection::new(3, 1, 0.1),
         ];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
 
         let network = genome.get_network();
 
@@ -169,7 +170,7 @@ mod tests {
         ];
         let connections = vec![Connection::new(0, 1, 0.7)];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
         let new_genome = genome.mutate_add_node(&config).unwrap();
 
         assert_eq!(new_genome.get_nodes().len(), 3);
@@ -189,7 +190,7 @@ mod tests {
         ];
         let connections = vec![Connection::new(0, 1, 0.7f32)];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
         let new_genome = genome.mutate_connection_weight(&config).unwrap();
 
         assert_ne!(
@@ -207,8 +208,10 @@ mod tests {
         ];
         let connections = vec![Connection::new(0, 2, 0f32), Connection::new(1, 2, 0f32)];
 
-        let genome = Genome::new(nodes, connections);
-        let new_genome = genome.mutate_connection_enabled().unwrap();
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
+        let new_genome = genome
+            .mutate_connection_enabled()
+            .expect("can't mutate connection");
 
         let mut enabled = 0;
         let mut disabled = 0;
@@ -240,7 +243,7 @@ mod tests {
             Connection::new(2, 3, 0.0),
         ];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
 
         let nodes = vec![
             Node::new(NeuronType::Input, 0, 0.0, None, None),
@@ -255,7 +258,7 @@ mod tests {
             Connection::new(3, 4, 0.0),
         ];
 
-        let child_genome = Genome::new(nodes, connections);
+        let child_genome = Genome::new(nodes, connections).expect("can't create genome");
 
         let new_genome = genome.mutate_crossover(&child_genome).unwrap();
 
@@ -279,16 +282,13 @@ mod tests {
             Connection::new(2, 1, 3f32),
         ];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
         let network = genome.get_network();
         assert_eq!(network.activate(vec![1.0]), vec![11.75]);
 
-        match genome.mutate_node_enabled(&config) {
-            None => {}
-            Some(new_genome) => {
-                let network = new_genome.get_network();
-                assert_eq!(network.activate(vec![1.0]), vec![3.5]);
-            }
+        if let Ok(new_genome) = genome.mutate_node_enabled(&config) {
+            let network = new_genome.get_network();
+            assert_eq!(network.activate(vec![1.0]), vec![3.5]);
         }
     }
 
@@ -307,7 +307,7 @@ mod tests {
             Connection::new(2, 3, 0.0),
         ];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
 
         let nodes = vec![
             Node::new(NeuronType::Input, 0, 0.0, None, None),
@@ -322,7 +322,7 @@ mod tests {
             Connection::new(2, 3, 0.0),
         ];
 
-        let child_genome = Genome::new(nodes, connections);
+        let child_genome = Genome::new(nodes, connections).expect("can't create genome");
 
         assert_eq!(genome.get_distance(&child_genome), 0);
 
@@ -342,7 +342,7 @@ mod tests {
             Connection::new(3, 4, 0.0),
         ];
 
-        let child_genome = Genome::new(nodes, connections);
+        let child_genome = Genome::new(nodes, connections).expect("can't create genome");
 
         assert_eq!(genome.get_distance(&child_genome), 1);
     }
@@ -381,7 +381,7 @@ mod tests {
             Connection::new(3, 1, 0.1),
         ];
 
-        let genome = Genome::new(nodes, connections);
+        let genome = Genome::new(nodes, connections).expect("can't create genome");
 
         let weights = genome.to_weights();
         assert_eq!(weights.len(), 42);

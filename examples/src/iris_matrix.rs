@@ -32,7 +32,7 @@ struct Record {
     variety_virginica: f32,
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(LevelFilter::INFO)
         .with_test_writer()
@@ -102,9 +102,9 @@ fn main() {
             vec![],
             Some(Activation::Sigmoid),
             &config,
-        );
+        )?;
 
-        if let Some(genome) = genome.mutate_connection_weight(&config) {
+        if let Ok(genome) = genome.mutate_connection_weight(&config) {
             let mut organism = Organism::new(genome);
             get_fitness(&mut organism, &inputs, &outputs);
             population.push(organism);
@@ -125,7 +125,7 @@ fn main() {
             let min_j =
                 (population.len() + get_random_range(0, population.len() - 1)) % population.len();
 
-            if let Some(organism) = population[i].mutate(population.get(min_j), &config) {
+            if let Ok(organism) = population[i].mutate(population.get(min_j), &config) {
                 new_population.push(organism);
             }
         }
@@ -135,7 +135,7 @@ fn main() {
 
         for i in vec.iter().take(best_genomes.len() / 3) {
             if let Some(genome) = best_genomes.get(*i) {
-                if let Some(genome) = genome.mutate_connection_weight(&config) {
+                if let Ok(genome) = genome.mutate_connection_weight(&config) {
                     new_population.push(Organism::new(genome));
                 }
             }
@@ -194,4 +194,6 @@ fn main() {
 
         info!("{success}/{}", shape[0]);
     }
+
+    Ok(())
 }
