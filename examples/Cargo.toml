@@ -1,6 +1,6 @@
 [package]
 name = "examples"
-version = "0.1.18"
+version = "0.1.19"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -32,3 +32,4 @@ ndarray = { workspace = true }
 tracing = { workspace = true }
 vivalaakam_neuro_neat = { workspace = true }
 vivalaakam_neuro_utils = { workspace = true }
+vivalaakam_neuro_shared = { workspace = true }

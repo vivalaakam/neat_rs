@@ -66,7 +66,7 @@ impl Genome {
             inputs,
             outputs,
         };
-        let _ = genome.sort_nodes()?;
+        genome.sort_nodes()?;
 
         Ok(genome)
     }
@@ -121,7 +121,7 @@ impl Genome {
                 counter += 1;
             }
 
-            last_layer = layer.clone();
+            last_layer.clone_from(&layer);
             nodes = [nodes, layer].concat();
         }
 

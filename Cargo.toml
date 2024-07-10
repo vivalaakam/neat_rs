@@ -2,9 +2,11 @@
 resolver = "2"
 
 members = [
-    "examples",
-    "neat", "nn",
+    "nn",
+    "neat",
     "utils",
+    "shared",
+    "examples",
 ]
 
 [workspace.dependencies]
@@ -21,7 +23,8 @@ hex-literal = "0.4"
 tracing-subscriber = "0.3"
 vivalaakam_neuro_nn = { path = "./nn" }
 vivalaakam_neuro_neat = { path = "./neat" }
-vivalaakam_neuro_utils = { version = "0.1.18", path = "./utils" }
+vivalaakam_neuro_utils = { version = "0.1.19", path = "./utils" }
+vivalaakam_neuro_shared = { version = "0.1.19", path = "./shared" }
 getrandom = { version = "0.2", features = ["js"] }
 serde = { version = "1.0", features = ["derive"] }
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26.3", features = ["derive"] }

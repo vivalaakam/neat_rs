@@ -1,6 +1,6 @@
 [package]
 name = "vivalaakam_neuro_neat"
-version = "0.1.18"
+version = "0.1.19"
 edition = "2021"
 authors = ["Andrey Makarov <viva.la.akam@gmail.com>"]
 description = "Library for work with neat network"
@@ -19,3 +19,4 @@ getrandom = { workspace = true }
 thiserror = { workspace = true }
 serde_json = { workspace = true }
 vivalaakam_neuro_utils = { workspace = true }
+vivalaakam_neuro_shared = { workspace = true }

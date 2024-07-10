@@ -5,6 +5,7 @@ use serde::Deserialize;
 use tracing::{debug, info, level_filters::LevelFilter, warn};
 
 use vivalaakam_neuro_neat::{Config, Genome, Organism};
+use vivalaakam_neuro_shared::OrganismTrait;
 use vivalaakam_neuro_utils::random::get_random_range;
 use vivalaakam_neuro_utils::Activation;
 

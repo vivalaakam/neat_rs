@@ -1,6 +1,7 @@
 use tracing::{event, level_filters::LevelFilter, Level};
 
 use vivalaakam_neuro_neat::{Config, Genome, Organism};
+use vivalaakam_neuro_shared::OrganismTrait;
 use vivalaakam_neuro_utils::{levenshtein, Activation};
 
 fn get_fitness(organism: &mut Organism) {

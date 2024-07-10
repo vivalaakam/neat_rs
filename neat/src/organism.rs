@@ -2,7 +2,8 @@ use std::cmp::Ordering;
 use std::sync::Mutex;
 
 use ndarray::Array2;
-use thiserror::Error;
+
+use vivalaakam_neuro_shared::{OrganismTrait, OrganismTraitError};
 
 use crate::genome::GenomeError;
 use crate::network::Network;
@@ -13,15 +14,15 @@ pub struct Organism {
     pub genome: Genome,
     pub network: Network,
     fitness: Mutex<f32>,
-    stagnation: usize,
+    stagnation: Mutex<usize>,
     genotype: Vec<u32>,
     id: Option<String>,
 }
 
-#[derive(Error, Debug)]
-pub enum OrganismError {
-    #[error("Invalid genome: {0}")]
-    InvalidGenome(GenomeError),
+impl From<GenomeError> for OrganismTraitError {
+    fn from(error: GenomeError) -> Self {
+        OrganismTraitError::new(Box::new(error))
+    }
 }
 
 impl Organism {
@@ -40,56 +41,18 @@ impl Organism {
             genome,
             network,
             fitness: Mutex::new(0.0),
-            stagnation: 0,
+            stagnation: Mutex::new(0),
             genotype,
             id: None,
         }
-    }
-
-    pub fn activate(&self, params: Vec<f32>) -> Vec<f32> {
-        self.network.activate(params)
-    }
-
-    pub fn activate_matrix(&self, params: &Array2<f32>) -> Array2<f32> {
-        self.network.activate_matrix(params)
-    }
-
-    pub fn set_fitness(&self, fitness: f32) {
-        let mut data = self.fitness.lock().unwrap();
-        *data = fitness
-    }
-
-    pub fn get_fitness(&self) -> f32 {
-        *self.fitness.lock().unwrap()
     }
 
     pub fn get_genotype(&self) -> Vec<u32> {
         self.genotype.to_vec()
     }
 
-    pub fn mutate(&self, child: Option<&Organism>, config: &Config) -> Result<Self, OrganismError> {
-        let genome = child.map(|organism| &organism.genome);
-
-        self.genome
-            .mutate(genome, config)
-            .map(Organism::new)
-            .map_err(OrganismError::InvalidGenome)
-    }
-
     pub fn as_json(&self) -> String {
         self.genome.as_json()
-    }
-
-    pub fn set_stagnation(&mut self, stagnation: usize) {
-        self.stagnation = stagnation
-    }
-
-    pub fn inc_stagnation(&mut self) {
-        self.stagnation += 1;
-    }
-
-    pub fn get_stagnation(&mut self) -> usize {
-        self.stagnation
     }
 
     pub fn set_id(&mut self, id: String) {
@@ -101,13 +64,50 @@ impl Organism {
     }
 }
 
+impl OrganismTrait<Config> for Organism {
+    fn activate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        self.network.activate(inputs)
+    }
+
+    fn activate_matrix(&self, matrix: &Array2<f32>) -> Array2<f32> {
+        self.network.activate_matrix(matrix)
+    }
+
+    fn set_fitness(&self, fitness: f32) {
+        let mut data = self.fitness.lock().unwrap();
+        *data = fitness
+    }
+
+    fn get_fitness(&self) -> f32 {
+        *self.fitness.lock().unwrap()
+    }
+
+    fn inc_stagnation(&self) {
+        let mut data = self.stagnation.lock().unwrap();
+        *data += 1;
+    }
+
+    fn get_stagnation(&self) -> usize {
+        self.stagnation.lock().unwrap().to_owned()
+    }
+
+    fn mutate(&self, child: Option<&Self>, config: &Config) -> Result<Self, OrganismTraitError> {
+        let genome = child.map(|organism| &organism.genome);
+
+        self.genome
+            .mutate(genome, config)
+            .map(Organism::new)
+            .map_err(OrganismTraitError::from)
+    }
+}
+
 impl Clone for Organism {
     fn clone(&self) -> Self {
         Organism {
             genome: self.genome.clone(),
             network: self.network.clone(),
             fitness: Mutex::new(self.get_fitness()),
-            stagnation: self.stagnation,
+            stagnation: Mutex::new(self.get_stagnation()),
             genotype: self.genotype.clone(),
             id: self.id.clone(),
         }
