@@ -1,6 +1,6 @@
 use ndarray::Array2;
+use rand::rng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 use serde::Deserialize;
 use tracing::{debug, info, level_filters::LevelFilter, warn};
 
@@ -119,6 +119,9 @@ fn main() -> anyhow::Result<()> {
     let mut best_genomes: Vec<Genome> = vec![];
     let mut bests_epoch = 0f32;
     let best_score = 100f32;
+
+    let mut rand = rng();
+
     while best.is_none() {
         let mut new_population = vec![];
 
@@ -132,7 +135,7 @@ fn main() -> anyhow::Result<()> {
         }
 
         let mut vec: Vec<usize> = (0..best_genomes.len()).collect();
-        vec.shuffle(&mut thread_rng());
+        vec.shuffle(&mut rand);
 
         for i in vec.iter().take(best_genomes.len() / 3) {
             if let Some(genome) = best_genomes.get(*i) {

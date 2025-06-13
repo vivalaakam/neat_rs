@@ -64,7 +64,7 @@ impl Agent {
             .into_iter()
             .zip(parent_b)
             .map(|(a, b)| {
-                if rng.gen_bool(self.crossover_chance as f64) {
+                if rng.random_bool(self.crossover_chance as f64) {
                     a
                 } else {
                     b
@@ -73,9 +73,9 @@ impl Agent {
             .collect::<Vec<f32>>();
 
         for gene in weights.iter_mut() {
-            if rng.gen_bool(self.mutation_chance as _) {
-                let sign = if rng.gen_bool(0.5) { -1f32 } else { 1f32 };
-                *gene += sign * self.mutation_coeff * rng.gen::<f32>();
+            if rng.random_bool(self.mutation_chance as _) {
+                let sign = if rng.random_bool(0.5) { -1f32 } else { 1f32 };
+                *gene += sign * self.mutation_coeff * rng.random::<f32>();
             }
         }
 
@@ -108,8 +108,8 @@ impl Agent {
             .get_weights()
             .iter()
             .map(|w| {
-                if rng.gen_bool(self.learning_chance as _) {
-                    let sign = if rng.gen_bool(0.5) { -1f32 } else { 1f32 };
+                if rng.random_bool(self.learning_chance as _) {
+                    let sign = if rng.random_bool(0.5) { -1f32 } else { 1f32 };
                     w + self.learning_coeff * sign
                 } else {
                     *w

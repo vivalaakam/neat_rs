@@ -1,4 +1,5 @@
-use rand::{distributions::Alphanumeric, random, Rng};
+use rand::distr::Alphanumeric;
+use rand::{random, Rng};
 
 /**
 Generate unique id
@@ -11,7 +12,7 @@ assert_eq!(id.len(), 6)
 ```
  */
 pub fn make_id(len: usize) -> String {
-    rand::thread_rng()
+    rand::rng()
         .sample_iter(&Alphanumeric)
         .take(len)
         .map(char::from)

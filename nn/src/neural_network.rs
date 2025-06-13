@@ -147,7 +147,7 @@ mod tests {
             .with_max_level(LevelFilter::INFO)
             .init();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let topology = vec![2, 1, 2, 2, 2, 1, 1, 1];
         info!("{:?}", topology);

@@ -41,5 +41,6 @@ jobs:
           cargo publish -p vivalaakam_neuro_utils --token ${CRATES_TOKEN}
           cargo publish -p vivalaakam_neuro_shared --token ${CRATES_TOKEN}
           cargo publish -p vivalaakam_neuro_neat --token ${CRATES_TOKEN}
+          cargo publish -p vivalaakam_neuro_nn --token ${CRATES_TOKEN}
         env:
           CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
