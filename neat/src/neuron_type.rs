@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// Enum representing the type of a neuron in the network.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub enum NeuronType {
     Input,
@@ -10,6 +11,7 @@ pub enum NeuronType {
 }
 
 impl NeuronType {
+    /// Converts the neuron type to a byte value.
     pub fn to_bytes(&self) -> u8 {
         match self {
             NeuronType::Input => 1,
@@ -19,6 +21,7 @@ impl NeuronType {
         }
     }
 
+    /// Creates a neuron type from a byte value.
     pub fn from_bytes(byte: u8) -> Self {
         match byte {
             1 => NeuronType::Input,

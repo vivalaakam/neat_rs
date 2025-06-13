@@ -6,6 +6,7 @@ use tracing::debug;
 use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
 
+/// Represents a computational neural network built from a genome.
 #[derive(Default, Clone)]
 pub struct Network {
     inputs: usize,
@@ -14,6 +15,7 @@ pub struct Network {
 }
 
 impl Network {
+    /// Creates a new network from a list of neurons.
     pub fn new(neurons: Vec<Neuron>) -> Self {
         let (inputs, outputs) =
             neurons
@@ -31,6 +33,7 @@ impl Network {
         }
     }
 
+    /// Activates the network with a single input vector.
     pub fn activate(&self, inputs: Vec<f32>) -> Vec<f32> {
         let mut state = vec![0f32; self.neurons.len()];
         for neuron in &self.neurons {
@@ -54,6 +57,7 @@ impl Network {
         state[state.len() - self.outputs..].to_vec()
     }
 
+    /// Activates the network with a batch (matrix) of inputs.
     pub fn activate_matrix(&self, matrix: &Array2<f32>) -> Array2<f32> {
         let rows_length = matrix.shape()[0];
         let mut state = concatenate(

@@ -9,6 +9,7 @@ use crate::genome::GenomeError;
 use crate::network::Network;
 use crate::{Config, Genome, NeuronType};
 
+/// Represents an individual in the population, encapsulating a genome and its network.
 #[derive(Default)]
 pub struct Organism {
     pub genome: Genome,
@@ -26,6 +27,7 @@ impl From<GenomeError> for OrganismTraitError {
 }
 
 impl Organism {
+    /// Creates a new organism from a genome.
     pub fn new(genome: Genome) -> Self {
         let network = genome.get_network();
         let mut genotype = genome
@@ -47,18 +49,22 @@ impl Organism {
         }
     }
 
+    /// Returns the genotype (hidden node IDs) of the organism.
     pub fn get_genotype(&self) -> Vec<u32> {
         self.genotype.to_vec()
     }
 
+    /// Serializes the organism's genome to JSON.
     pub fn as_json(&self) -> String {
         self.genome.as_json()
     }
 
+    /// Sets the organism's unique identifier.
     pub fn set_id(&mut self, id: String) {
         self.id = Some(id)
     }
 
+    /// Returns the organism's unique identifier, if set.
     pub fn get_id(&self) -> Option<&String> {
         self.id.as_ref()
     }

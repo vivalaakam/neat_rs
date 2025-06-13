@@ -1,19 +1,35 @@
+/// Configuration parameters for NEAT evolution and mutation.
 #[derive(Clone)]
 pub struct Config {
+    /// Probability of adding a node during mutation.
     pub add_node: f32,
+    /// Probability of adding a connection during mutation.
     pub add_connection: f32,
+    /// Probability of crossover during reproduction.
     pub crossover: f32,
+    /// Maximum number of connections allowed.
     pub connection_max: usize,
+    /// Probability of enabling/disabling a connection during mutation.
     pub connection_enabled: f32,
+    /// Initial connection weight range.
     pub connection_weight: f32,
+    /// Probability of mutating a connection's weight.
     pub connection_weight_prob: f32,
+    /// Maximum delta for connection weight mutation.
     pub connection_weight_delta: f32,
+    /// Number of iterations for connection weight mutation.
     pub connection_weight_iter: usize,
+    /// Maximum number of nodes allowed.
     pub node_max: usize,
+    /// Initial node bias range.
     pub node_bias: f32,
+    /// Probability of enabling/disabling a node during mutation.
     pub node_enabled: f32,
+    /// Probability of mutating a node's bias.
     pub node_bias_prob: f32,
+    /// Maximum delta for node bias mutation.
     pub node_bias_delta: f32,
+    /// Probability of mutating a node's activation function.
     pub node_activation_prob: f32,
 }
 

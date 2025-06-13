@@ -17,8 +17,8 @@ hex-literal = "1.0"
 tracing-subscriber = "0.3"
 vivalaakam_neuro_nn = { path = "./nn" }
 vivalaakam_neuro_neat = { path = "./neat" }
-vivalaakam_neuro_utils = { version = "0.1.19", path = "./utils" }
-vivalaakam_neuro_shared = { version = "0.1.19", path = "./shared" }
+vivalaakam_neuro_utils = { version = "0.1.20", path = "./utils" }
+vivalaakam_neuro_shared = { version = "0.1.20", path = "./shared" }
 getrandom = { version = "0.3", features = ["wasm_js"] }
 serde = { version = "1.0", features = ["derive"] }
 strum = { version = "0.27", features = ["derive"] }

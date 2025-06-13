@@ -18,6 +18,7 @@ use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
 use crate::node::Node;
 
+/// Represents a neural network genome: nodes, connections, and input/output counts.
 #[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Genome {
     connections: Vec<Connection>,
@@ -53,6 +54,7 @@ pub enum GenomeError {
 }
 
 impl Genome {
+    /// Creates a genome from given nodes and connections.
     pub fn new(nodes: Vec<Node>, connections: Vec<Connection>) -> Result<Self, GenomeError> {
         let (inputs, outputs) = nodes.iter().fold((0, 0), |a, b| match b.get_type() {
             NeuronType::Input => (a.0 + 1, a.1),
@@ -71,6 +73,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Generates a random genome with specified parameters.
     pub fn generate_genome(
         inputs: usize,
         outputs: usize,
@@ -153,19 +156,23 @@ impl Genome {
         Genome::new(nodes, connections)
     }
 
+    /// Adds a node to the genome.
     pub fn add_node(&mut self, node: Node) -> Result<(), GenomeError> {
         self.nodes.push(node);
         self.sort_nodes()
     }
 
+    /// Returns all nodes in the genome.
     pub fn get_nodes(&self) -> Vec<Node> {
         self.nodes.to_vec()
     }
 
+    /// Adds a connection to the genome.
     pub fn add_connection(&mut self, connection: Connection) {
         self.connections.push(connection);
     }
 
+    /// Returns all connections in the genome.
     pub fn get_connections(&self) -> Vec<Connection> {
         self.connections.to_vec()
     }
@@ -336,6 +343,7 @@ impl Genome {
         Network::new(neurons)
     }
 
+    /// Mutates the genome (add node, add connection, weights, etc).
     pub fn mutate(&self, child: Option<&Genome>, config: &Config) -> Result<Self, GenomeError> {
         let mut genome = Genome::default();
         self.clone_into(&mut genome);
@@ -412,6 +420,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Mutates the genome by adding a new node.
     pub fn mutate_add_node(&self, config: &Config) -> Result<Self, GenomeError> {
         if self.nodes.len() >= config.node_max {
             return Err(GenomeError::MaxNodes);
@@ -468,6 +477,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Mutates the genome by adding a new connection.
     pub fn mutate_add_connection(&self, config: &Config) -> Result<Self, GenomeError> {
         if self.connections.len() >= config.connection_max {
             return Err(GenomeError::MaxConnections);
@@ -525,6 +535,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Mutates the bias of a node.
     pub fn mutate_node_bias(&self, config: &Config) -> Result<Self, GenomeError> {
         let mut genome = Genome::default();
         self.clone_into(&mut genome);
@@ -545,6 +556,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Mutates the activation function of a node.
     pub fn mutate_node_activation(&self, _config: &Config) -> Result<Self, GenomeError> {
         let mut genome = Genome::default();
         self.clone_into(&mut genome);
@@ -568,6 +580,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Toggles the enabled/disabled state of a node.
     pub fn mutate_node_enabled(&self, _config: &Config) -> Result<Self, GenomeError> {
         let mut genome = Genome::default();
         self.clone_into(&mut genome);
@@ -589,6 +602,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Mutates the weight of a connection.
     pub fn mutate_connection_weight(&self, config: &Config) -> Result<Self, GenomeError> {
         let mut genome = Genome::default();
         self.clone_into(&mut genome);
@@ -617,6 +631,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Toggles the enabled/disabled state of a connection.
     pub fn mutate_connection_enabled(&self) -> Result<Self, GenomeError> {
         let mut genome = self.clone();
 
@@ -644,6 +659,7 @@ impl Genome {
         Ok(genome)
     }
 
+    /// Performs crossover with another genome.
     pub fn mutate_crossover(&self, child: &Genome) -> Result<Self, GenomeError> {
         let mut nodes = self.get_nodes();
         let mut connections = self.get_connections();
@@ -674,6 +690,7 @@ impl Genome {
         Genome::new(nodes, connections)
     }
 
+    /// Calculates the Levenshtein distance between hidden nodes of two genomes.
     pub fn get_distance(&self, child: &Genome) -> i32 {
         let mut parent_nodes = self.get_hidden_node_ids();
 
@@ -685,6 +702,7 @@ impl Genome {
         levenshtein(parent_nodes, child_nodes).unwrap_or(i32::MAX)
     }
 
+    /// Serializes the genome to JSON.
     pub fn as_json(&self) -> String {
         json!(self).to_string()
     }
@@ -710,6 +728,7 @@ impl Genome {
         ]
     }
 
+    /// Converts the genome to a flat vector of weights.
     pub fn to_weights(&self) -> Vec<f32> {
         self.get_topology()
             .iter()
@@ -723,6 +742,7 @@ impl Genome {
             .collect()
     }
 
+    /// Creates a genome from a flat vector of weights.
     pub fn from_weights(weights: impl IntoIterator<Item = f32>) -> Self {
         let mut weights = weights.into_iter();
 

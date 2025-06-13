@@ -49,7 +49,9 @@ impl Neuron {
         T: Rng,
     {
         let bias = rng.random_range(-1.0..=1.0);
-        let weights = (0..input_size).map(|_| rng.random_range(-1.0..=1.0)).collect();
+        let weights = (0..input_size)
+            .map(|_| rng.random_range(-1.0..=1.0))
+            .collect();
 
         Self::new(bias, activation, weights)
     }
