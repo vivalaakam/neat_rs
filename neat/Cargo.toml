@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["Andrey Makarov <viva.la.akam@gmail.com>"]
 description = "Library for work with neat network"
 license = "MIT"
+repository = "https://github.com/vivalaakam/neat_rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
