@@ -12,5 +12,4 @@ license = "MIT"
 rand = { workspace = true }
 strum = { workspace = true }
 serde = { workspace = true }
-ndarray = { workspace = true }
 thiserror = { workspace = true }

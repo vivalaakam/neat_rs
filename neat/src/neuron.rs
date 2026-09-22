@@ -12,8 +12,8 @@ pub struct Neuron {
     activation: Activation,
 }
 
-impl From<Node> for Neuron {
-    fn from(value: Node) -> Self {
+impl From<&Node> for Neuron {
+    fn from(value: &Node) -> Self {
         Neuron {
             position: value.get_position(),
             bias: value.get_bias(),
@@ -60,11 +60,11 @@ impl Neuron {
         &self.neuron_type
     }
 
-    pub fn get_connections(&self) -> Vec<Link> {
-        self.connections.to_vec()
+    pub fn connections(&self) -> &[Link] {
+        &self.connections
     }
 
-    pub fn activate(&self, value: f32) -> f32 {
-        self.activation.activate(value)
+    pub fn get_activation(&self) -> Activation {
+        self.activation
     }
 }

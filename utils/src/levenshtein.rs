@@ -1,4 +1,3 @@
-use ndarray::Array2;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -7,47 +6,33 @@ pub enum LevenshteinError {
     MinNotFound,
 }
 
-pub fn levenshtein<T>(vec_1: Vec<T>, vec_2: Vec<T>) -> Result<i32, LevenshteinError>
+pub fn levenshtein<T>(left: &[T], right: &[T]) -> Result<i32, LevenshteinError>
 where
     T: PartialEq,
 {
-    if vec_1.is_empty() {
-        return Ok(vec_2.len() as i32);
+    if left.is_empty() {
+        return Ok(right.len() as i32);
     }
-    if vec_2.is_empty() {
-        return Ok(vec_1.len() as i32);
-    }
-
-    let vec_1_len = vec_1.len() + 1;
-    let vec_2_len = vec_2.len() + 1;
-
-    let mut matrix = Array2::<i32>::zeros((vec_2_len, vec_1_len));
-
-    for i in 0..vec_2_len {
-        matrix[[i, 0]] = i as i32;
+    if right.is_empty() {
+        return Ok(left.len() as i32);
     }
 
-    for j in 0..vec_1_len {
-        matrix[[0, j]] = j as i32;
-    }
+    let mut previous: Vec<i32> = (0..=right.len() as i32).collect();
+    let mut current = vec![0; right.len() + 1];
 
-    for i in 1..vec_2_len {
-        for j in 1..vec_1_len {
-            let cost = if vec_2[i - 1] == vec_1[j - 1] { 0 } else { 1 };
-            let val = *[
-                matrix[[i - 1, j - 1]] + cost,
-                matrix[[i, j - 1]] + 1,
-                matrix[[i - 1, j]] + 1,
-            ]
-            .iter()
-            .min()
-            .ok_or(LevenshteinError::MinNotFound)?;
-
-            matrix[[i, j]] = val;
+    for (row, item) in left.iter().enumerate() {
+        current[0] = (row + 1) as i32;
+        for (column, other) in right.iter().enumerate() {
+            let cost = if item == other { 0 } else { 1 };
+            let insert = current[column] + 1;
+            let delete = previous[column + 1] + 1;
+            let replace = previous[column] + cost;
+            current[column + 1] = insert.min(delete).min(replace);
         }
+        std::mem::swap(&mut previous, &mut current);
     }
 
-    Ok(matrix[[vec_2.len(), vec_1.len()]])
+    Ok(previous[right.len()])
 }
 
 #[cfg(test)]
@@ -57,15 +42,15 @@ mod tests {
     #[test]
     fn it_works() {
         let distance = levenshtein(
-            vec!["k", "i", "t", "t", "e", "n"],
-            vec!["s", "m", "i", "t", "t", "e", "n"],
+            &["k", "i", "t", "t", "e", "n"],
+            &["s", "m", "i", "t", "t", "e", "n"],
         );
 
         assert_eq!(distance.unwrap(), 2);
 
         let distance = levenshtein(
-            vec!["k", "i", "t", "t", "e", "n"],
-            vec!["f", "i", "t", "t", "i", "n", "g"],
+            &["k", "i", "t", "t", "e", "n"],
+            &["f", "i", "t", "t", "i", "n", "g"],
         );
 
         assert_eq!(distance.unwrap(), 3);

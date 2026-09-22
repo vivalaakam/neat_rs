@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Enum representing the type of a neuron in the network.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub enum NeuronType {
     Input,
     Hidden,

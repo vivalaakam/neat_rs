@@ -95,9 +95,9 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        population = [population, new_population].concat();
+        population.append(&mut new_population);
         population.sort();
-        population = population[0..population_size].to_vec();
+        population.truncate(population_size);
 
         if let Some(best) = population.get_mut(0) {
             best.inc_stagnation();

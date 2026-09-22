@@ -26,9 +26,14 @@ impl FitnessTrait for Dataset {
     {
         let output = organism.activate_matrix(&self.inputs);
 
-        let distance = (&self.outputs - output)
+        let distance = self
+            .outputs
             .iter()
-            .map(|row| (*row).powi(2))
+            .zip(output.iter())
+            .map(|(target, value)| {
+                let delta = target - value;
+                delta * delta
+            })
             .sum::<f32>();
 
         16f32 / (1f32 + distance)

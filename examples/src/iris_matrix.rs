@@ -11,9 +11,13 @@ use vivalaakam_neuro_utils::Activation;
 
 fn get_fitness(organism: &mut Organism, inputs: &Array2<f32>, outputs: &Array2<f32>) {
     let results = organism.activate_matrix(inputs);
-    let distance = (outputs - results)
+    let distance = outputs
         .iter()
-        .map(|row| (*row).powi(2))
+        .zip(results.iter())
+        .map(|(target, value)| {
+            let delta = target - value;
+            delta * delta
+        })
         .sum::<f32>();
 
     debug!("distance: {distance}");
@@ -153,9 +157,9 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        population = [population, new_population].concat();
+        population.append(&mut new_population);
         population.sort();
-        population = population[0..population_size].to_vec();
+        population.truncate(population_size);
 
         if let Some(best) = population.get_mut(0) {
             if best.get_stagnation() == 0 && best.get_fitness().round() > bests_epoch {

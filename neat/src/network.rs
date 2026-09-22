@@ -1,21 +1,35 @@
-use std::ops::{Add, Mul};
+use ndarray::Array2;
 
-use ndarray::{concatenate, s, Array1, Array2, Axis};
-use tracing::debug;
+use vivalaakam_neuro_utils::Activation;
 
 use crate::neuron::Neuron;
 use crate::neuron_type::NeuronType;
 
-/// Represents a computational neural network built from a genome.
+#[derive(Clone)]
+struct Step {
+    position: usize,
+    bias: f32,
+    activation: Activation,
+    start: usize,
+    end: usize,
+}
+
+/// Feed-forward network compiled from a genome.
+///
+/// Neurons run in topological order. A batch is stored column-wise so each
+/// connection is one contiguous multiply-add over every sample.
 #[derive(Default, Clone)]
 pub struct Network {
     inputs: usize,
     outputs: usize,
-    neurons: Vec<Neuron>,
+    neuron_count: usize,
+    links_from: Vec<u32>,
+    links_weight: Vec<f32>,
+    steps: Vec<Step>,
 }
 
 impl Network {
-    /// Creates a new network from a list of neurons.
+    /// Creates a network from neurons already sorted in evaluation order.
     pub fn new(neurons: Vec<Neuron>) -> Self {
         let (inputs, outputs) =
             neurons
@@ -26,73 +40,98 @@ impl Network {
                     _ => (i, o),
                 });
 
+        let mut links_from = Vec::new();
+        let mut links_weight = Vec::new();
+        let mut steps = Vec::new();
+
+        for neuron in &neurons {
+            if neuron.get_neuron_type() == &NeuronType::Input {
+                continue;
+            }
+
+            let start = links_from.len();
+            for link in neuron.connections() {
+                links_from.push(link.get_from());
+                links_weight.push(link.get_weight());
+            }
+
+            steps.push(Step {
+                position: neuron.get_position() as usize,
+                bias: neuron.get_bias(),
+                activation: neuron.get_activation(),
+                start,
+                end: links_from.len(),
+            });
+        }
+
         Network {
-            neurons,
             inputs,
             outputs,
+            neuron_count: neurons.len(),
+            links_from,
+            links_weight,
+            steps,
+        }
+    }
+
+    fn eval_row(&self, state: &mut [f32]) {
+        for step in &self.steps {
+            let mut value = step.bias;
+            for index in step.start..step.end {
+                value += state[self.links_from[index] as usize] * self.links_weight[index];
+            }
+            state[step.position] = step.activation.activate(value);
         }
     }
 
     /// Activates the network with a single input vector.
     pub fn activate(&self, inputs: Vec<f32>) -> Vec<f32> {
-        let mut state = vec![0f32; self.neurons.len()];
-        for neuron in &self.neurons {
-            match neuron.get_neuron_type() {
-                NeuronType::Input => {
-                    state[neuron.get_position() as usize] = inputs[neuron.get_position() as usize]
-                }
-                _ => {
-                    let value = neuron
-                        .get_connections()
-                        .iter()
-                        .fold(neuron.get_bias(), |a, b| {
-                            a + state[b.get_from() as usize] * b.get_weight()
-                        });
+        let mut state = vec![0f32; self.neuron_count];
+        state[..self.inputs].copy_from_slice(&inputs[..self.inputs]);
+        self.eval_row(&mut state);
 
-                    state[neuron.get_position() as usize] = neuron.activate(value);
-                }
-            }
-        }
-
-        state[state.len() - self.outputs..].to_vec()
+        let output_at = self.neuron_count.saturating_sub(self.outputs);
+        state[output_at..].to_vec()
     }
 
-    /// Activates the network with a batch (matrix) of inputs.
+    /// Activates the network on a batch of inputs, one sample per row.
     pub fn activate_matrix(&self, matrix: &Array2<f32>) -> Array2<f32> {
-        let rows_length = matrix.shape()[0];
-        let mut state = concatenate(
-            Axis(1),
-            &[
-                matrix.view(),
-                Array2::zeros((rows_length, self.neurons.len() - self.inputs)).view(),
-            ],
-        )
-        .expect("");
+        let rows = matrix.nrows();
+        let width = self.neuron_count;
+        let mut state = vec![0f32; rows * width];
+        let mut acc = vec![0f32; rows];
 
-        debug!("view: {:?}", state.view());
-
-        for neuron in &self.neurons {
-            match neuron.get_neuron_type() {
-                NeuronType::Input => {}
-                _ => {
-                    let value = neuron.get_connections().iter().fold(
-                        Array1::from_elem(rows_length, neuron.get_bias()),
-                        |a, b| {
-                            a.add(
-                                &state
-                                    .column(b.get_from() as usize)
-                                    .mul(Array1::from_elem(rows_length, b.get_weight())),
-                            )
-                        },
-                    );
-
-                    state
-                        .column_mut(neuron.get_position() as usize)
-                        .assign(&value.map(|x| neuron.activate(*x)));
-                }
+        for column in 0..self.inputs {
+            for row in 0..rows {
+                state[column * rows + row] = matrix[[row, column]];
             }
         }
 
-        state.slice(s![.., -(self.outputs as i32)..]).to_owned()
+        for step in &self.steps {
+            acc.fill(step.bias);
+            for index in step.start..step.end {
+                let from = self.links_from[index] as usize;
+                let weight = self.links_weight[index];
+                let column = &state[from * rows..(from + 1) * rows];
+                for row in 0..rows {
+                    acc[row] += column[row] * weight;
+                }
+            }
+
+            let position = step.position;
+            for row in 0..rows {
+                state[position * rows + row] = step.activation.activate(acc[row]);
+            }
+        }
+
+        let mut out = Vec::with_capacity(rows * self.outputs);
+        let output_at = width.saturating_sub(self.outputs);
+        for row in 0..rows {
+            for column in 0..self.outputs {
+                out.push(state[(output_at + column) * rows + row]);
+            }
+        }
+
+        Array2::from_shape_vec((rows, self.outputs), out).expect("activate_matrix shape")
     }
 }

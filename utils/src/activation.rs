@@ -16,6 +16,7 @@ pub enum Activation {
 }
 
 impl Activation {
+    #[inline]
     pub fn activate(&self, x: f32) -> f32 {
         match self {
             Activation::Sigmoid => 1.0 / (1.0 + (-4.924273 * x).exp()),
@@ -31,7 +32,7 @@ impl Activation {
             Activation::Relu => x.max(0.0),
             Activation::SoftSign => x / (1.0 + x.abs()),
             Activation::Sinusoid => x.sin(),
-            Activation::Gaussian => (-1.0 * x.powi(2)).exp(),
+            Activation::Gaussian => (-x.powi(2)).exp(),
             Activation::Selu => {
                 let alpha = 1.673_263_2;
                 (if x > 0.0 { x } else { alpha * x.exp() - alpha }) * 1.050_700_9

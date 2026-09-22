@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
 
 use ndarray::Array2;
 
@@ -7,15 +7,15 @@ use vivalaakam_neuro_shared::{OrganismTrait, OrganismTraitError};
 
 use crate::genome::GenomeError;
 use crate::network::Network;
-use crate::{Config, Genome, NeuronType};
+use crate::{Config, Genome};
 
 /// Represents an individual in the population, encapsulating a genome and its network.
 #[derive(Default)]
 pub struct Organism {
     pub genome: Genome,
     pub network: Network,
-    fitness: Mutex<f32>,
-    stagnation: Mutex<usize>,
+    fitness: AtomicU32,
+    stagnation: AtomicUsize,
     genotype: Vec<u32>,
     id: Option<String>,
 }
@@ -30,28 +30,22 @@ impl Organism {
     /// Creates a new organism from a genome.
     pub fn new(genome: Genome) -> Self {
         let network = genome.get_network();
-        let mut genotype = genome
-            .get_nodes()
-            .into_iter()
-            .filter(|node| node.get_type() == NeuronType::Hidden)
-            .map(|node| node.get_id())
-            .collect::<Vec<_>>();
-
+        let mut genotype = genome.get_hidden_node_ids();
         genotype.sort();
 
         Organism {
             genome,
             network,
-            fitness: Mutex::new(0.0),
-            stagnation: Mutex::new(0),
+            fitness: AtomicU32::new(0),
+            stagnation: AtomicUsize::new(0),
             genotype,
             id: None,
         }
     }
 
     /// Returns the genotype (hidden node IDs) of the organism.
-    pub fn get_genotype(&self) -> Vec<u32> {
-        self.genotype.to_vec()
+    pub fn get_genotype(&self) -> &[u32] {
+        &self.genotype
     }
 
     /// Serializes the organism's genome to JSON.
@@ -80,21 +74,20 @@ impl OrganismTrait<Config> for Organism {
     }
 
     fn set_fitness(&self, fitness: f32) {
-        let mut data = self.fitness.lock().unwrap();
-        *data = fitness
+        self.fitness
+            .store(fitness.to_bits(), AtomicOrdering::Relaxed);
     }
 
     fn get_fitness(&self) -> f32 {
-        *self.fitness.lock().unwrap()
+        f32::from_bits(self.fitness.load(AtomicOrdering::Relaxed))
     }
 
     fn inc_stagnation(&self) {
-        let mut data = self.stagnation.lock().unwrap();
-        *data += 1;
+        self.stagnation.fetch_add(1, AtomicOrdering::Relaxed);
     }
 
     fn get_stagnation(&self) -> usize {
-        self.stagnation.lock().unwrap().to_owned()
+        self.stagnation.load(AtomicOrdering::Relaxed)
     }
 
     fn mutate(&self, child: Option<&Self>, config: &Config) -> Result<Self, OrganismTraitError> {
@@ -112,8 +105,8 @@ impl Clone for Organism {
         Organism {
             genome: self.genome.clone(),
             network: self.network.clone(),
-            fitness: Mutex::new(self.get_fitness()),
-            stagnation: Mutex::new(self.get_stagnation()),
+            fitness: AtomicU32::new(self.get_fitness().to_bits()),
+            stagnation: AtomicUsize::new(self.get_stagnation()),
             genotype: self.genotype.clone(),
             id: self.id.clone(),
         }

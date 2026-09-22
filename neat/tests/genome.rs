@@ -105,7 +105,7 @@ mod tests {
         let network = genome.get_network();
 
         assert_eq!(network.activate(vec![1.0]), vec![0.9996177]);
-        assert_eq!(network.activate(vec![1.2]), vec![0.9998430]);
+        assert_eq!(network.activate(vec![1.2]), vec![0.999_843]);
         assert_eq!(network.activate(vec![0.5]), vec![0.99639386]);
         assert_eq!(network.activate(vec![0.1]), vec![0.977193]);
     }
@@ -150,7 +150,7 @@ mod tests {
 
         let inputs = Array2::from_shape_vec((4, 1), vec![1.0, 1.2, 0.5, 0.1]).expect("input error");
         let outputs =
-            Array2::from_shape_vec((4, 1), vec![0.9996177, 0.9998430, 0.99639386, 0.977193])
+            Array2::from_shape_vec((4, 1), vec![0.9996177, 0.999_843, 0.99639386, 0.977193])
                 .expect("output error");
 
         assert_eq!(network.activate_matrix(&inputs), outputs);
@@ -391,8 +391,74 @@ mod tests {
         let network = restored_genome.get_network();
 
         assert_eq!(network.activate(vec![1.0]), vec![0.9996177]);
-        assert_eq!(network.activate(vec![1.2]), vec![0.9998430]);
+        assert_eq!(network.activate(vec![1.2]), vec![0.999_843]);
         assert_eq!(network.activate(vec![0.5]), vec![0.99639386]);
         assert_eq!(network.activate(vec![0.1]), vec![0.977193]);
+    }
+
+    #[test]
+    fn activate_matrix_matches_each_row() {
+        let inputs_n = 4;
+        let outputs_n = 3;
+        let hidden = 8;
+        let mut nodes = Vec::new();
+        let mut connections = Vec::new();
+
+        for i in 0..inputs_n {
+            nodes.push(Node::new(
+                NeuronType::Input,
+                i as u32,
+                0.0,
+                None,
+                Some(i as u32 + 1),
+            ));
+        }
+        for h in 0..hidden {
+            let id = (inputs_n + h) as u32;
+            nodes.push(Node::new(
+                NeuronType::Hidden,
+                id,
+                0.1 * h as f32,
+                Some(Activation::Sigmoid),
+                Some(id + 1),
+            ));
+            for i in 0..inputs_n {
+                connections.push(Connection::new(i as u32, id, 0.05 * (i + h) as f32));
+            }
+        }
+        for o in 0..outputs_n {
+            let id = (inputs_n + hidden + o) as u32;
+            nodes.push(Node::new(
+                NeuronType::Output,
+                id,
+                0.2,
+                Some(Activation::Sigmoid),
+                Some(id + 1),
+            ));
+            for h in 0..hidden {
+                connections.push(Connection::new(
+                    (inputs_n + h) as u32,
+                    id,
+                    0.02 * (h + o) as f32,
+                ));
+            }
+        }
+
+        let network = Genome::new(nodes, connections)
+            .expect("network")
+            .get_network();
+        let rows = 5;
+        let inputs = Array2::from_shape_fn((rows, inputs_n), |(row, column)| {
+            (row + column) as f32 / 10.0
+        });
+        let batched = network.activate_matrix(&inputs);
+
+        for row in 0..rows {
+            let sample: Vec<f32> = (0..inputs_n).map(|column| inputs[[row, column]]).collect();
+            let single = network.activate(sample);
+            for (column, value) in single.iter().enumerate() {
+                assert_eq!(batched[[row, column]], *value);
+            }
+        }
     }
 }

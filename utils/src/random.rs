@@ -6,7 +6,7 @@ pub fn get_random_position(len: usize) -> usize {
 }
 
 pub fn get_random_weight(weight: f32) -> f32 {
-    get_random_range(-1f32 * weight, weight)
+    get_random_range(-weight, weight)
 }
 
 pub fn get_random() -> f32 {

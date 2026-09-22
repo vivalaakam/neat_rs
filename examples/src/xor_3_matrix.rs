@@ -26,9 +26,13 @@ lazy_static! {
 fn get_fitness(organism: &mut Organism) {
     let output = organism.activate_matrix(&INPUTS);
 
-    let distance = (OUTPUTS.clone() - output)
+    let distance = OUTPUTS
         .iter()
-        .map(|row| (*row).powi(2))
+        .zip(output.iter())
+        .map(|(target, value)| {
+            let delta = target - value;
+            delta * delta
+        })
         .sum::<f32>();
     organism.set_fitness(64f32 / (1f32 + distance));
 }
@@ -94,9 +98,9 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        population = [population, new_population].concat();
+        population.append(&mut new_population);
         population.sort();
-        population = population[0..population_size].to_vec();
+        population.truncate(population_size);
 
         if let Some(best) = population.get_mut(0) {
             best.inc_stagnation();

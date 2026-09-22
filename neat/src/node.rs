@@ -49,7 +49,7 @@ impl Node {
 
     /// Returns the type of the neuron (Input, Hidden, Output, etc).
     pub fn get_type(&self) -> NeuronType {
-        self.neuron_type.clone()
+        self.neuron_type
     }
 
     /// Sets the node's bias value.

@@ -9,6 +9,45 @@ pub struct Population<C, T> {
     config: C,
 }
 
+fn worker_count(len: usize) -> usize {
+    if len < 8 {
+        return 1;
+    }
+
+    std::thread::available_parallelism()
+        .map(|count| count.get())
+        .unwrap_or(1)
+        .clamp(1, len)
+}
+
+fn run_chunks<R>(len: usize, work: impl Fn(usize, usize) -> R + Sync) -> Vec<R>
+where
+    R: Send,
+{
+    let workers = worker_count(len);
+    if workers == 1 {
+        return vec![work(0, len)];
+    }
+
+    let chunk = len.div_ceil(workers);
+    std::thread::scope(|scope| {
+        let work = &work;
+        let mut handles = Vec::new();
+        for worker in 0..workers {
+            let start = worker * chunk;
+            if start >= len {
+                break;
+            }
+            let end = (start + chunk).min(len);
+            handles.push(scope.spawn(move || work(start, end)));
+        }
+        handles
+            .into_iter()
+            .map(|handle| handle.join().expect("fitness worker panicked"))
+            .collect()
+    })
+}
+
 impl<C, T> Population<C, T>
 where
     C: Clone + Default,
@@ -36,34 +75,55 @@ where
 
     pub fn calculate_fitness<D>(&mut self, dataset: &D)
     where
-        D: FitnessTrait,
+        D: FitnessTrait + Sync,
+        T: Sync,
     {
-        for organism in &self.organisms {
-            organism.set_fitness(dataset.calculate(organism));
-        }
+        let organisms = &self.organisms;
+        run_chunks(organisms.len(), |start, end| {
+            for organism in &organisms[start..end] {
+                organism.set_fitness(dataset.calculate(organism));
+            }
+        });
 
         self.cut_costs();
     }
 
     fn cut_costs(&mut self) {
         self.organisms.sort();
-        self.organisms = self.organisms[0..self.size].to_vec();
+        self.organisms.truncate(self.size);
     }
 
     pub fn epoch<D>(&mut self, dataset: &D) -> Option<&T>
     where
-        D: FitnessTrait,
+        D: FitnessTrait + Sync,
+        T: Send + Sync,
+        C: Sync,
     {
         let size = self.organisms.len();
+        if size == 0 {
+            return None;
+        }
 
-        for i in 0..size {
-            let min_j = (size + get_random_range(0, size - 1)) % size;
+        let partners: Vec<usize> = (0..size)
+            .map(|_| (size + get_random_range(0, size - 1)) % size)
+            .collect();
 
-            if let Ok(organism) = self.organisms[i].mutate(self.organisms.get(min_j), &self.config)
-            {
-                organism.set_fitness(dataset.calculate(&organism));
-                self.add_organism(organism)
+        let children = run_chunks(size, |start, end| {
+            let mut born = Vec::with_capacity(end - start);
+            for (offset, partner) in partners[start..end].iter().enumerate() {
+                let index = start + offset;
+                if let Ok(organism) =
+                    self.organisms[index].mutate(self.organisms.get(*partner), &self.config)
+                {
+                    organism.set_fitness(dataset.calculate(&organism));
+                    born.push(organism);
+                }
             }
+            born
+        });
+
+        for born in children {
+            self.organisms.extend(born);
         }
 
         self.cut_costs();

@@ -105,7 +105,7 @@ impl Genome {
             let mut layer = vec![];
             for _ in 0..l {
                 let node = Node::new(
-                    NeuronType::Input,
+                    NeuronType::Hidden,
                     get_random_range((inputs + outputs) as u32, u32::MAX),
                     get_random_weight(config.node_bias),
                     activation,
@@ -178,75 +178,49 @@ impl Genome {
     }
 
     fn sort_nodes(&mut self) -> Result<(), GenomeError> {
-        debug!(network = json!(self).to_string(), "sort_nodes enter");
+        let mut incoming: HashMap<u32, Vec<u32>> = HashMap::with_capacity(self.nodes.len());
 
-        let mut conns: HashMap<u32, Vec<&Connection>> = HashMap::new();
-        let mut positions: HashMap<u32, usize> = HashMap::new();
-
-        for (pos, id) in self.get_all_node_ids().iter().enumerate() {
-            conns.insert(*id, vec![]);
-            positions.insert(*id, pos);
+        for node in &self.nodes {
+            incoming.insert(node.get_id(), Vec::new());
         }
-
-        debug!(
-            conns = json!(conns).to_string(),
-            positions = json!(positions).to_string(),
-            "sort_nodes conns"
-        );
 
         for connection in &self.connections {
             if connection.get_enabled() {
-                debug!(to = connection.get_to(), "sort_nodes connection.get_to()");
-                if let Some(nodes) = conns.get_mut(&connection.get_to()) {
-                    nodes.push(connection);
+                if let Some(froms) = incoming.get_mut(&connection.get_to()) {
+                    froms.push(connection.get_from());
                 }
             }
         }
 
-        let mut inputs = vec![];
-        let mut outputs = vec![];
+        let mut inputs = Vec::new();
+        let mut outputs = Vec::new();
         let mut hidden = VecDeque::new();
 
-        let nodes = self.get_nodes();
-        for node in &nodes {
+        for (index, node) in self.nodes.iter().enumerate() {
             match node.get_type() {
-                NeuronType::Input => {
-                    inputs.push(node);
-                }
-                NeuronType::Hidden => {
-                    hidden.push_back(node);
-                }
-                NeuronType::Output => {
-                    outputs.push(node);
-                }
-                _ => {}
+                NeuronType::Input => inputs.push(index),
+                NeuronType::Hidden => hidden.push_back(index),
+                NeuronType::Output => outputs.push(index),
+                NeuronType::Unknown => {}
             }
         }
 
-        let mut viewed = HashSet::new();
+        inputs.sort_by_key(|&index| self.nodes[index].get_position());
 
-        inputs.sort_by_key(|a| a.get_position());
-
+        let mut viewed = HashSet::with_capacity(self.nodes.len());
         let mut counter = 0;
 
-        for input in &inputs {
-            viewed.insert(input.get_id());
-
-            self.nodes[*positions.get(&input.get_id()).unwrap()].set_position(counter);
-
+        for index in inputs {
+            viewed.insert(self.nodes[index].get_id());
+            self.nodes[index].set_position(counter);
             counter += 1;
         }
 
-        debug!(hidden = json!(hidden).to_string(), "sort_nodes hidden");
-
         let mut iterations = 0;
 
-        while !hidden.is_empty() {
-            let Some(current) = hidden.pop_front() else {
-                continue;
-            };
-
-            let Some(connections) = conns.get(&current.get_id()) else {
+        while let Some(current) = hidden.pop_front() {
+            let id = self.nodes[current].get_id();
+            let Some(froms) = incoming.get(&id) else {
                 continue;
             };
 
@@ -256,36 +230,20 @@ impl Genome {
                 return Err(GenomeError::SortNodesStacked);
             }
 
-            debug!(
-                viewed = json!(viewed).to_string(),
-                connections = json!(connections).to_string(),
-                "sort_nodes viewed"
-            );
-
-            let all_viewed = connections
-                .iter()
-                .all(|connection| viewed.contains(&connection.get_from()));
-
-            if all_viewed {
-                let Some(pos) = positions.get(&current.get_id()) else {
-                    continue;
-                };
-                self.nodes[*pos].set_position(counter);
-                viewed.insert(current.get_id());
+            if froms.iter().all(|from| viewed.contains(from)) {
+                self.nodes[current].set_position(counter);
+                viewed.insert(id);
                 counter += 1;
             } else {
-                debug!(current = json!(current).to_string(), "sort_nodes hidden");
                 hidden.push_back(current);
             }
         }
 
-        debug!(outputs = json!(outputs).to_string(), "sort_nodes outputs");
+        outputs.sort_by_key(|&index| self.nodes[index].get_position());
 
-        outputs.sort_by_key(|a| a.get_position());
-
-        for output in outputs {
-            self.nodes[*positions.get(&output.get_id()).unwrap()].set_position(counter);
-            viewed.insert(output.get_id());
+        for index in outputs {
+            self.nodes[index].set_position(counter);
+            viewed.insert(self.nodes[index].get_id());
             counter += 1;
         }
 
@@ -293,52 +251,49 @@ impl Genome {
     }
 
     pub fn get_network(&self) -> Network {
-        let mut neurons = vec![];
-        let mut conns: HashMap<u32, Vec<&Connection>> = HashMap::new();
-        let mut positions: HashMap<u32, u32> = HashMap::new();
-        let mut enabled: HashSet<u32> = HashSet::new();
+        let mut position_of: HashMap<u32, u32> = HashMap::with_capacity(self.nodes.len());
+        let mut enabled: HashSet<u32> = HashSet::with_capacity(self.nodes.len());
 
         for node in &self.nodes {
-            conns.insert(node.get_id(), vec![]);
-            positions.insert(node.get_id(), node.get_position());
+            position_of.insert(node.get_id(), node.get_position());
             if node.get_enabled() {
                 enabled.insert(node.get_id());
             }
         }
 
-        debug!("get_network conns: {conns:?}");
+        let mut incoming: HashMap<u32, Vec<Link>> = HashMap::with_capacity(self.nodes.len());
 
         for connection in &self.connections {
             if connection.get_enabled()
                 && enabled.contains(&connection.get_to())
                 && enabled.contains(&connection.get_from())
             {
-                debug!("get_network connection.get_to(): {}", connection.get_to());
-                let nodes = conns.get_mut(&connection.get_to()).unwrap();
-                nodes.push(connection);
+                let from = position_of
+                    .get(&connection.get_from())
+                    .copied()
+                    .unwrap_or(0);
+                incoming
+                    .entry(connection.get_to())
+                    .or_default()
+                    .push(Link::new(
+                        from,
+                        position_of.get(&connection.get_to()).copied().unwrap_or(0),
+                        connection.get_weight(),
+                    ));
             }
         }
 
-        let mut nodes = self.get_nodes();
+        let mut order: Vec<usize> = (0..self.nodes.len()).collect();
+        order.sort_by_key(|&index| self.nodes[index].get_position());
 
-        nodes.sort_by_key(|a| a.get_position());
-
-        for node in &nodes {
-            let connections = conns
-                .get(&node.get_id())
-                .unwrap()
-                .iter()
-                .map(|conn| {
-                    Link::new(
-                        *positions.get(&conn.get_from()).unwrap_or(&0),
-                        node.get_position(),
-                        conn.get_weight(),
-                    )
-                })
-                .collect::<Vec<_>>();
-
-            neurons.push(Neuron::from(node.clone()).with_connections(connections));
-        }
+        let neurons = order
+            .into_iter()
+            .map(|index| {
+                let node = &self.nodes[index];
+                let connections = incoming.remove(&node.get_id()).unwrap_or_default();
+                Neuron::from(node).with_connections(connections)
+            })
+            .collect();
 
         Network::new(neurons)
     }
@@ -352,30 +307,32 @@ impl Genome {
 
         if let Some(child) = child {
             if get_random() < config.crossover {
-                if let Ok(g) = genome.mutate_crossover(child) {
-                    genome = g;
+                let crossed = genome.mutate_crossover(child);
+                if let Ok(crossed) = crossed {
+                    genome = crossed;
                     debug!(genome = json!(genome).to_string(), "mutate crossover");
                 }
             }
         }
 
         if get_random() < config.add_node {
-            if let Ok(g) = genome.mutate_add_node(config) {
-                genome = g;
+            let added = genome.mutate_add_node(config);
+            if let Ok(added) = added {
+                genome = added;
                 debug!(genome = json!(genome).to_string(), "mutate add_node");
             }
         }
 
         if get_random() < config.add_connection {
-            if let Ok(g) = genome.mutate_add_connection(config) {
-                genome = g;
+            let added = genome.mutate_add_connection_in_place(config);
+            if added.is_ok() {
                 debug!(genome = json!(genome).to_string(), "mutate add_connection");
             }
         }
 
         if get_random() < config.connection_enabled {
-            if let Ok(g) = genome.mutate_connection_enabled() {
-                genome = g;
+            let toggled = genome.mutate_connection_enabled_in_place();
+            if toggled.is_ok() {
                 debug!(
                     genome = json!(genome).to_string(),
                     "mutate connection_enabled"
@@ -386,8 +343,8 @@ impl Genome {
             let retry = get_random_range(1, config.connection_weight_iter);
 
             for i in 0..retry {
-                if let Ok(g) = genome.mutate_connection_weight(config) {
-                    genome = g;
+                let updated = genome.mutate_connection_weight_in_place(config);
+                if updated.is_ok() {
                     debug!(
                         genome = json!(genome).to_string(),
                         "mutate connection_weight ({i})"
@@ -397,22 +354,22 @@ impl Genome {
         }
 
         if get_random() < config.node_enabled {
-            if let Ok(g) = genome.mutate_node_enabled(config) {
-                genome = g;
+            let toggled = genome.mutate_node_enabled_in_place();
+            if toggled.is_ok() {
                 debug!(genome = json!(genome).to_string(), "mutate node_enabled");
             }
         }
 
         if get_random() < config.node_bias_prob {
-            if let Ok(g) = genome.mutate_node_bias(config) {
-                genome = g;
+            let updated = genome.mutate_node_bias_in_place(config);
+            if updated.is_ok() {
                 debug!(genome = json!(genome).to_string(), "mutate node_bias");
             }
         }
 
         if get_random() < config.node_activation_prob {
-            if let Ok(g) = genome.mutate_node_activation(config) {
-                genome = g;
+            let updated = genome.mutate_node_activation_in_place();
+            if updated.is_ok() {
                 debug!(genome = json!(genome).to_string(), "mutate node_activation");
             }
         }
@@ -479,142 +436,147 @@ impl Genome {
 
     /// Mutates the genome by adding a new connection.
     pub fn mutate_add_connection(&self, config: &Config) -> Result<Self, GenomeError> {
+        let mut genome = self.clone();
+        genome.mutate_add_connection_in_place(config)?;
+        Ok(genome)
+    }
+
+    fn mutate_add_connection_in_place(&mut self, config: &Config) -> Result<(), GenomeError> {
         if self.connections.len() >= config.connection_max {
             return Err(GenomeError::MaxConnections);
         }
 
-        let mut genome = Genome::default();
-        self.clone_into(&mut genome);
-
-        let mut exists_connections = HashSet::new();
-
+        let mut exists_connections = HashSet::with_capacity(self.connections.len());
         for connection in &self.connections {
-            exists_connections.insert(connection.get_id());
+            exists_connections.insert((connection.get_from(), connection.get_to()));
         }
 
-        let mut applicants = vec![];
+        let mut applicants = Vec::new();
 
-        for i in 0..self.nodes.len() - 1 {
-            let i_node = self.nodes.get(i).unwrap();
-            if !i_node.get_enabled() {
-                continue;
-            }
-            for j in i + 1..self.nodes.len() {
-                let j_node = self.nodes.get(j).unwrap();
-                if !j_node.get_enabled() {
+        if self.nodes.len() > 1 {
+            for i in 0..self.nodes.len() - 1 {
+                if !self.nodes[i].get_enabled() {
                     continue;
                 }
-
-                let conn_id = match (i_node.get_type(), j_node.get_type()) {
-                    (NeuronType::Input, NeuronType::Hidden)
-                    | (NeuronType::Input, NeuronType::Output)
-                    | (NeuronType::Hidden, NeuronType::Output) => {
-                        Some(format!("{}:{}", i_node.get_id(), j_node.get_id()))
+                let i_type = self.nodes[i].get_type();
+                let i_id = self.nodes[i].get_id();
+                for j in i + 1..self.nodes.len() {
+                    if !self.nodes[j].get_enabled() {
+                        continue;
                     }
-                    _ => None,
-                };
-
-                if conn_id.is_some() && !exists_connections.contains(&conn_id.unwrap()) {
-                    applicants.push((i_node.get_id(), j_node.get_id()));
+                    let j_type = self.nodes[j].get_type();
+                    let j_id = self.nodes[j].get_id();
+                    let pair = match (i_type, j_type) {
+                        (NeuronType::Input, NeuronType::Hidden)
+                        | (NeuronType::Input, NeuronType::Output)
+                        | (NeuronType::Hidden, NeuronType::Output) => Some((i_id, j_id)),
+                        _ => None,
+                    };
+                    if let Some(pair) = pair {
+                        if !exists_connections.contains(&pair) {
+                            applicants.push(pair);
+                        }
+                    }
                 }
             }
         }
 
         if !applicants.is_empty() {
-            let conn = get_random_position(applicants.len());
-
-            let applicant = applicants.get(conn).unwrap();
-
-            genome.add_connection(Connection::new(
+            let applicant = applicants[get_random_position(applicants.len())];
+            self.add_connection(Connection::new(
                 applicant.0,
                 applicant.1,
                 get_random_weight(config.connection_weight),
             ));
         }
 
-        Ok(genome)
+        Ok(())
     }
 
     /// Mutates the bias of a node.
     pub fn mutate_node_bias(&self, config: &Config) -> Result<Self, GenomeError> {
-        let mut genome = Genome::default();
-        self.clone_into(&mut genome);
+        let mut genome = self.clone();
+        genome.mutate_node_bias_in_place(config)?;
+        Ok(genome)
+    }
 
+    fn mutate_node_bias_in_place(&mut self, config: &Config) -> Result<(), GenomeError> {
         let applicants = [self.get_hidden_node_ids(), self.get_output_node_ids()].concat();
 
-        let Some(applicant) = applicants.get(get_random_position(applicants.len())) else {
+        let Some(&applicant) = applicants.get(get_random_position(applicants.len())) else {
             return Err(GenomeError::NodeBiasApplicantNotFound);
         };
 
-        let Some(index) = genome.get_node_position_by_id(*applicant) else {
+        let Some(index) = self.get_node_position_by_id(applicant) else {
             return Err(GenomeError::NodeBiasPositionNotFound);
         };
 
-        if let Some(node) = genome.nodes.get_mut(index) {
-            node.set_bias(node.get_bias() + get_random_weight(config.node_bias_delta));
-        }
-        Ok(genome)
+        let node = &mut self.nodes[index];
+        node.set_bias(node.get_bias() + get_random_weight(config.node_bias_delta));
+        Ok(())
     }
 
     /// Mutates the activation function of a node.
     pub fn mutate_node_activation(&self, _config: &Config) -> Result<Self, GenomeError> {
-        let mut genome = Genome::default();
-        self.clone_into(&mut genome);
+        let mut genome = self.clone();
+        genome.mutate_node_activation_in_place()?;
+        Ok(genome)
+    }
 
+    fn mutate_node_activation_in_place(&mut self) -> Result<(), GenomeError> {
         let applicants = self.get_input_node_ids();
 
-        let Some(applicant) = applicants.get(get_random_position(applicants.len())) else {
+        let Some(&applicant) = applicants.get(get_random_position(applicants.len())) else {
             return Err(GenomeError::NodeActivationApplicantNotFound);
         };
 
-        let Some(index) = genome.get_node_position_by_id(*applicant) else {
+        let Some(index) = self.get_node_position_by_id(applicant) else {
             return Err(GenomeError::NodeActivationPositionNotFound);
         };
 
-        if let Some(node) = genome.nodes.get_mut(index) {
-            let activations = Activation::to_vec();
-            let activation = get_random_position(activations.len());
-            node.set_activation(activations[activation]);
-        }
-
-        Ok(genome)
+        let activations = Activation::to_vec();
+        let activation = activations[get_random_position(activations.len())];
+        self.nodes[index].set_activation(activation);
+        Ok(())
     }
 
     /// Toggles the enabled/disabled state of a node.
     pub fn mutate_node_enabled(&self, _config: &Config) -> Result<Self, GenomeError> {
-        let mut genome = Genome::default();
-        self.clone_into(&mut genome);
+        let mut genome = self.clone();
+        genome.mutate_node_enabled_in_place()?;
+        Ok(genome)
+    }
 
+    fn mutate_node_enabled_in_place(&mut self) -> Result<(), GenomeError> {
         let applicants = [self.get_hidden_node_ids(), self.get_input_node_ids()].concat();
 
-        let Some(applicant) = applicants.get(get_random_position(applicants.len())) else {
+        let Some(&applicant) = applicants.get(get_random_position(applicants.len())) else {
             return Err(GenomeError::NodeEnabledApplicantNotFound);
         };
 
-        let Some(index) = genome.get_node_position_by_id(*applicant) else {
+        let Some(index) = self.get_node_position_by_id(applicant) else {
             return Err(GenomeError::NodeEnabledPositionNotFound);
         };
 
-        if let Some(node) = genome.nodes.get_mut(index) {
-            node.toggle_enabled();
-        }
-
-        Ok(genome)
+        self.nodes[index].toggle_enabled();
+        Ok(())
     }
 
     /// Mutates the weight of a connection.
     pub fn mutate_connection_weight(&self, config: &Config) -> Result<Self, GenomeError> {
-        let mut genome = Genome::default();
-        self.clone_into(&mut genome);
+        let mut genome = self.clone();
+        genome.mutate_connection_weight_in_place(config)?;
+        Ok(genome)
+    }
+
+    fn mutate_connection_weight_in_place(&mut self, config: &Config) -> Result<(), GenomeError> {
         let mut max_retry = 10;
         let mut index = None;
         while max_retry > 0 && index.is_none() {
             let conn = get_random_position(self.connections.len());
-            let connection = self.connections[conn].clone();
-
             max_retry -= 1;
-            if connection.get_enabled() {
-                index = Some(conn)
+            if self.connections[conn].get_enabled() {
+                index = Some(conn);
             }
         }
 
@@ -622,41 +584,41 @@ impl Genome {
             return Err(GenomeError::ConnectionWeightIndexNotFound);
         };
 
-        if let Some(connection) = genome.connections.get_mut(index) {
-            connection.set_weight(
-                connection.get_weight() + get_random_weight(config.connection_weight_delta),
-            );
-        }
-
-        Ok(genome)
+        let connection = &mut self.connections[index];
+        connection.set_weight(
+            connection.get_weight() + get_random_weight(config.connection_weight_delta),
+        );
+        Ok(())
     }
 
     /// Toggles the enabled/disabled state of a connection.
     pub fn mutate_connection_enabled(&self) -> Result<Self, GenomeError> {
         let mut genome = self.clone();
+        genome.mutate_connection_enabled_in_place()?;
+        Ok(genome)
+    }
 
-        let mut appropriate = HashMap::new();
+    fn mutate_connection_enabled_in_place(&mut self) -> Result<(), GenomeError> {
+        let mut appropriate: HashMap<u32, Vec<usize>> = HashMap::with_capacity(self.nodes.len());
 
         for node in &self.nodes {
-            appropriate.insert(node.get_id(), vec![]);
+            appropriate.insert(node.get_id(), Vec::new());
         }
 
-        for i in 0..self.connections.len() {
-            if let Some(app) = appropriate.get_mut(&self.connections[i].get_to()) {
-                app.push(i)
+        for (index, connection) in self.connections.iter().enumerate() {
+            if let Some(bucket) = appropriate.get_mut(&connection.get_to()) {
+                bucket.push(index);
             }
         }
 
         let indices = appropriate
             .values()
-            .flat_map(|a| a.to_vec())
+            .flat_map(|bucket| bucket.iter().copied())
             .collect::<Vec<_>>();
 
         let conn = indices[get_random_position(indices.len())];
-
-        genome.connections[conn].toggle_enabled();
-
-        Ok(genome)
+        self.connections[conn].toggle_enabled();
+        Ok(())
     }
 
     /// Performs crossover with another genome.
@@ -699,7 +661,7 @@ impl Genome {
         parent_nodes.sort();
         child_nodes.sort();
 
-        levenshtein(parent_nodes, child_nodes).unwrap_or(i32::MAX)
+        levenshtein(&parent_nodes, &child_nodes).unwrap_or(i32::MAX)
     }
 
     /// Serializes the genome to JSON.
